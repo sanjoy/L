@@ -1,1 +1,23 @@
-L: A small lambda calculus.
+L: A Small Lambda Calculus
+
+The overall objective is to build a small system which can interpret
+and simplify untyped lambda calculus. Eventually support for modules
+may be added, possibly by using Screech.
+
+I plan to keep the core relatively simple: it shall simply read and
+simplify expressions like the following:
+
+IfThenElse <- (L (a b c) (a b c))
+True <- (L (a b) (a))
+False <- (L (a b) (b))
+
+One <- (L (f x) (f x))
+ZeroP <- (L (n) (n (L (x) (False)) True))
+Query <- (L () ZeroP One)
+
+EVAL (Query)
+
+ >> (L (p q) (q))
+
+I chose the LISPish syntax for simplicity. Note that, for the same
+reason, I choose to write an application MN as (L () (M N)).
