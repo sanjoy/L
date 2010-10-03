@@ -3,3 +3,4 @@ TODO:
  * Throughly test the parser and lexer.
  * Write code to intern the tokens.
  * Write a routine for normal order evaluation.
+ * Use an (at least) ad-hoc testing framework.
