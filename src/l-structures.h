@@ -3,6 +3,8 @@
 
 #include "l-mempool.h"
 
+#include <stdio.h>
+
 typedef struct {
 	char *name;
 	int idx;
@@ -67,5 +69,38 @@ LLambda *l_lambda_new (LMempool *, LListNode *, LTreeNode *);
 LAssignment *l_assignment_new (LMempool *, LToken *, LLambda *);
 
 void l_register_universal_node (LMempool *, LUniversalNodeType, void *, void *);
+
+/*
+ * These functions are little more than debug tools right now; which means no
+ * pretty printing etc.
+ */
+
+#define l_print_token(out,token) do { \
+		fprintf (out, "%s", (token)->name); \
+	} while (0)
+
+void l_print_tree (FILE *, LTreeNode *);
+void l_print_list (FILE *, LListNode *);
+
+#define l_print_lambda(out,lambda) do { \
+		fprintf (out, "(L \n"); \
+		l_print_list (out, (lambda)->args); \
+		fprintf (out, "\n"); \
+		l_print_tree (out, (lambda)->body); \
+		fprintf (out, "\n)\n"); \
+	} while (0)
+
+#define l_print_assignment(out, assign) do {	  \
+		l_print_token (out, (assign)->lhs); \
+		fprintf (out, "\n<- \n"); \
+		l_print_lambda (out, (assign)->rhs); \
+	} while (0)
+
+#define l_print_universal_node(out, node) do { \
+	if ((node)->type == NODE_ASSIGNMENT) \
+		l_print_assignment (out, (node)->assignment); \
+	else \
+		l_print_lambda (out, (node)->lambda); \
+	} while (0)
 
 #endif /* __STRUCTURES__H */

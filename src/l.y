@@ -11,12 +11,17 @@
 
 #include "l-structures.h"
 #include "l-parser-context.h"
+#include "parser.h"
 
 #define scanner (context->scanner_data)
+
+int l_lex (YYSTYPE *, YYLTYPE *, void *);
+void l_error (YYLTYPE *, LParserContext *, const char *);
 
 %}
 
 %token TOKEN
+%token ERROR
 
 %union {
      char *raw_token;
@@ -78,3 +83,33 @@ assignment:
 
 %%
 
+#include <stdlib.h>
+#include "l-mempool.h"
+
+LParserContext *
+l_parser_context_new_from_file (FILE *file)
+{
+	LParserContext *context = malloc (sizeof (LParserContext));
+	context->input_string = NULL;
+	context->mempool = l_mempool_new ();
+	context->roots = NULL;
+	context->input_file = file;
+	return context;
+}
+
+LParserContext *
+l_parser_context_new_from_string (char *str, size_t len)
+{
+	LParserContext *context = malloc (sizeof (LParserContext));
+	size_t i = 0;
+	
+	context->mempool = l_mempool_new ();
+	context->roots = NULL;
+	context->input_file = NULL;
+	
+	context->input_string = l_mempool_alloc (context->mempool, len + 1);
+	while (i < len && *str != '\0')
+		context->input_string [i++] = *str++;
+	context->input_string [i] = '\0';
+	return context;
+}

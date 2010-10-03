@@ -31,7 +31,12 @@ $(OBJDIR)/l-parser-tokens.h: l.y
 $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) $< -o$@
 
-$(FULL_OBJS): $(OBJDIR)/l-parser-tokens.h $(wildcard $(OBJDIR)/*.h) | $(OBJDIR)
+$(filter-out $(OBJDIR)/l-parser-tokens.h, $(FULL_OBJS)): $(OBJDIR)/l-parser-tokens.h $(wildcard $(OBJDIR)/*.h) | $(OBJDIR)
+$(OBJDIR)/l-parser-tokens.h: | $(OBJDIR)
 
 $(OBJDIR):
 	mkdir $(OBJDIR)
+
+clean:
+	rm -f $(OBJDIR)/*
+	rmdir $(OBJDIR)

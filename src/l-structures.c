@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 LToken *
 l_token_new (LMempool *pool, char *str)
@@ -11,7 +12,7 @@ l_token_new (LMempool *pool, char *str)
 	LToken *token = l_mempool_alloc (pool, sizeof (LToken));
 	int len = strlen (str), i;
 
-	token->name = malloc (len + 1);
+	token->name = l_mempool_alloc (pool, len + 1);
 	for (i = 0; i < len; i++)
 		token->name [i] = str [i];
 	token->name [i] = '\0';
@@ -87,4 +88,47 @@ l_register_universal_node (LMempool *pool, LUniversalNodeType type, void *data, 
 
 	new->next = context->roots;
 	context->roots = new;
+}
+
+/* TODO Add pretty printing. */
+
+static void
+print_tree_recur (FILE *out, LTreeNode *node)
+{
+	if (node->first_child != NULL) {
+		fprintf (out, "(");
+		print_tree_recur (out, node->first_child);
+		fprintf (out, ")");
+	} else {
+		if (node->token != NULL) {
+			l_print_token (out, node->token);
+			fprintf (out, " ");
+		} else {
+			assert (node->lambda);
+			l_print_lambda (out, node->lambda);
+		}
+	}
+
+	if (node->right_sibling != NULL)
+		print_tree_recur (out, node->right_sibling);
+}
+
+void
+l_print_tree (FILE *out, LTreeNode *tree)
+{
+	fprintf (out, "(");
+	print_tree_recur (out, tree);
+	fprintf (out, ")");
+}
+
+void
+l_print_list (FILE *out, LListNode *list)
+{
+	LListNode *i;
+	fprintf (out, "(");
+	for (i = list; i != NULL; i = i->next) {
+		if (list->token != NULL)
+			l_print_token (out, i->token);
+	}
+	fprintf (out, ")");
 }

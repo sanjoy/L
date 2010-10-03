@@ -35,6 +35,8 @@
 %option prefix="l_"
 %option bison-bridge
 %option bison-locations
+%option nounput
+%option noinput
 	 
 %%
 
@@ -49,9 +51,11 @@
                                     return TOKEN;
                                 }
 
-.
+.                               return ERROR;
 
 %%
+
+int l_parse (void *);
 
 int
 l_wrap (yyscan_t scanner)
@@ -60,8 +64,23 @@ l_wrap (yyscan_t scanner)
 }
 
 void
-l_error (YYLTYPE *locp, LParserContext *context, const char* err)
+l_error (YYLTYPE *loc, LParserContext *context, const char* err)
 {
-	/* TODO Have a function pointer in context */
-	printf ("ERR");
+	if (context->error_handler != NULL)
+		context->error_handler (loc->first_line, err);
+}
+
+int
+l_parse_using_context (LParserContext *context)
+{
+	l_lex_init_extra (context, &(context->scanner_data));
+	return l_parse (context);
+}
+
+void
+l_destroy_parser_context (LParserContext *context)
+{
+	l_lex_destroy (context->scanner_data);
+	l_mempool_destroy (context->mempool);
+	free (context);
 }
