@@ -50,7 +50,7 @@ program:
      ;
 
 parsed_token:
-             TOKEN { $$ = l_token_new (context->mempool, $1); }
+               TOKEN { $$ = l_token_new (context->hash_table, context->mempool, $1); }
 			 ;
 
 flat_list:
@@ -94,6 +94,7 @@ l_parser_context_new_from_file (FILE *file)
 	context->mempool = l_mempool_new ();
 	context->roots = NULL;
 	context->input_file = file;
+	context->hash_table = l_token_hashtable_new (context->mempool, 97);
 	return context;
 }
 
@@ -106,6 +107,7 @@ l_parser_context_new_from_string (char *str, size_t len)
 	context->mempool = l_mempool_new ();
 	context->roots = NULL;
 	context->input_file = NULL;
+	context->hash_table = l_token_hashtable_new (context->mempool, 97);
 	
 	context->input_string = l_mempool_alloc (context->mempool, len + 1);
 	while (i < len && *str != '\0')

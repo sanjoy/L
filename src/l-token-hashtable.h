@@ -3,8 +3,6 @@
 
 #include "l-structures.h"
 
-typedef struct _LTokenHashtable LTokenHashtable;
-
 LTokenHashtable *l_token_hashtable_new (LMempool *, int);
 
 LToken *l_token_hashtable_hash (LTokenHashtable *, char *);

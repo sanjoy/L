@@ -31,15 +31,15 @@ l_token_hashtable_lookup (LTokenHashtable *table, char *text)
 {
 	int slot = 0;
 	LTokenWrapper *iter;
+	char *text_iter = text;
 
-	while (*text)
-		slot += *text++;
+	while (*text_iter)
+		slot += *text_iter++;
 	slot %= table->hash_len;
 
 	for (iter = table->table [slot]; iter; iter = iter->next) {
-		if (strcmp (iter->token->name, text) == 0) {
+		if (strcmp (iter->token->name, text) == 0)
 			return iter->token;
-		}
 	}
 	return NULL;
 }

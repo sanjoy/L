@@ -1,5 +1,6 @@
 #include "l-structures.h"
 #include "l-parser-context.h"
+#include "l-token-hashtable.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -7,17 +8,9 @@
 #include <assert.h>
 
 LToken *
-l_token_new (LMempool *pool, char *str)
+l_token_new (LTokenHashtable *hash, LMempool *pool, char *str)
 {
-	LToken *token = l_mempool_alloc (pool, sizeof (LToken));
-	int len = strlen (str), i;
-
-	token->name = l_mempool_alloc (pool, len + 1);
-	for (i = 0; i < len; i++)
-		token->name [i] = str [i];
-	token->name [i] = '\0';
-
-	return token;
+	return l_token_hashtable_hash (hash, str);
 }
 
 LTreeNode *

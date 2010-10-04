@@ -10,6 +10,8 @@ typedef struct {
 	int idx, non_free_idx;
 } LToken;
 
+typedef struct _LTokenHashtable LTokenHashtable;
+
 typedef struct _LLambda LLambda;
 
 struct _LTreeNode {
@@ -57,7 +59,7 @@ struct _LUniversalNode {
 
 typedef struct _LUniversalNode LUniversalNode;
 
-LToken *l_token_new (LMempool *, char *);
+LToken *l_token_new (LTokenHashtable *, LMempool *, char *);
 
 LTreeNode *l_tree_cons_horizontal (LMempool *, LToken *, LTreeNode *);
 LTreeNode *l_tree_cons_vertical (LMempool *, LTreeNode *, LTreeNode *);
@@ -76,7 +78,7 @@ void l_register_universal_node (LMempool *, LUniversalNodeType, void *, void *);
  */
 
 #define l_print_token(out,token) do { \
-		fprintf (out, "%s", (token)->name); \
+		fprintf (out, "%s [%d] ", (token)->name, (token)->idx); \
 	} while (0)
 
 void l_print_tree (FILE *, LTreeNode *);

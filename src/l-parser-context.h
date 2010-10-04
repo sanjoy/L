@@ -3,6 +3,7 @@
 
 #include "l-structures.h"
 #include "l-mempool.h"
+#include "l-token-hashtable.h"
 
 #include <stdio.h>
 
@@ -13,6 +14,7 @@ typedef struct {
 	void *scanner_data;
 	LMempool *mempool;
 	LUniversalNode *roots;
+	LTokenHashtable *hash_table;
 
 	char *input_string;
 	FILE *input_file;
