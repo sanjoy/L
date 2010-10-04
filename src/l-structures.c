@@ -127,8 +127,10 @@ l_print_list (FILE *out, LListNode *list)
 	LListNode *i;
 	fprintf (out, "(");
 	for (i = list; i != NULL; i = i->next) {
-		if (list->token != NULL)
+		if (list->token != NULL) {
 			l_print_token (out, i->token);
+			fprintf (out, " ");
+		}
 	}
 	fprintf (out, ")");
 }

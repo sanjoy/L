@@ -63,7 +63,7 @@ flat_list_inner:
               ;
 
 nested_list:
-            '(' nested_list_inner ')' {$$ = $2; }
+              '(' nested_list_inner ')' {$$ = $2; }
             ;
 
 nested_list_inner:
