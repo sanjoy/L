@@ -15,6 +15,7 @@ main (void)
 	LParserContext *ctx = l_parser_context_new_from_file (stdin);
 	LUniversalNode *nd;
 	LPrettyPrinter *pprinter = l_pretty_printer_new (ctx);
+	l_pretty_printer_set_debug_output (pprinter, 1);
 	ctx->error_handler = l_error_handler;
 	l_parse_using_context (ctx);
 	for (nd = ctx->roots; nd; nd = nd->next) {

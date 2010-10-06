@@ -45,22 +45,24 @@ static void
 print_tree_full (LPrettyPrinter *, LTreeNode *, int, int);
 
 static void
-print_lambda_full (LPrettyPrinter *pprinter, LLambda *lambda, int delta)
+print_lambda_full (LPrettyPrinter *pprinter, LLambda *lambda, int delta, int init_indent)
 {
 	int prev_current_indent = pprinter->current_indent;
-	PRINT_N_TIMES (pprinter->current_indent - delta, " ", pprinter->out);
+	if (init_indent)
+		PRINT_N_TIMES (pprinter->current_indent - delta, " ", pprinter->out);
 	pprinter->current_indent += fprintf (pprinter->out, "(L ");
 	l_pretty_print_list (pprinter, lambda->args);
 	fprintf (pprinter->out, "\n");
 	print_tree_full (pprinter, lambda->body, 1, 0);
-	fprintf (pprinter->out, ")\n");
+	fprintf (pprinter->out, ")");
 	pprinter->current_indent = prev_current_indent;
 }
 
 void
 l_pretty_print_lambda (LPrettyPrinter *pprinter, LLambda *lambda)
 {
-	print_lambda_full (pprinter, lambda, 0);
+	print_lambda_full (pprinter, lambda, 0, 1);
+	fprintf (pprinter->out, "\n");
 }
 
 static void
@@ -87,7 +89,9 @@ print_tree_full (LPrettyPrinter *pprinter, LTreeNode *node, int init_indent, int
 			if (iter->right_sibling != NULL)
 				fprintf (pprinter->out, " ");
 		} else {
-			l_pretty_print_lambda (pprinter, iter->lambda);
+			print_lambda_full (pprinter, iter->lambda, 0, node != iter);
+			if (iter->right_sibling != NULL)
+				fprintf (pprinter->out, "\n");
 		}
 	}
 	
@@ -121,7 +125,7 @@ l_pretty_print_assignment (LPrettyPrinter *pprinter, LAssignment *assign)
 	int delta = fprintf (pprinter->out, "%s <- ", assign->lhs->name);
 	pprinter->current_indent += delta;
 
-	print_lambda_full (pprinter, assign->rhs, delta);
+	print_lambda_full (pprinter, assign->rhs, delta, 1);
 
 	fprintf (pprinter->out, "\n");
 	pprinter->current_indent = prev_current_indent;
