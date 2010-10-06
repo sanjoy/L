@@ -51,6 +51,11 @@
                                     return TOKEN;
                                 }
 
+:[A-Z0-9]+                      {
+                                     yylval->raw_token = yytext;
+                                     return IDENTIFIER;
+                                }
+
 .                               return OTHER;
 
 %%

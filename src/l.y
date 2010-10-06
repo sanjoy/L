@@ -20,11 +20,13 @@ void l_error (YYLTYPE *, LContext *, const char *);
 
 %}
 
+%token IDENTIFIER
 %token TOKEN
 %token OTHER
 
 %union {
      char *raw_token;
+     char *identifier;
      LListNode *list;
      LToken *token;	
      LTreeNode *tree;
@@ -33,8 +35,9 @@ void l_error (YYLTYPE *, LContext *, const char *);
      LUniversalNode *universal;
 };
 
+%type <identifier> IDENTIFIER
 %type <raw_token>  TOKEN
-%type <token>      parsed_token
+%type <token>      parsed_token parsed_identifier
 %type <list>       flat_list flat_list_inner
 %type <tree>       nested_list nested_list_inner
 %type <lambda>     lambda
@@ -51,8 +54,12 @@ program:
      ;
 
 parsed_token:
-               TOKEN { $$ = l_token_new (context->hash_table, context->mempool, $1); }
-			 ;
+             TOKEN { $$ = l_token_new (context->hash_table, context->mempool, $1); }
+           ;
+
+parsed_identifier:
+                    IDENTIFIER { $$ = l_token_new (context->hash_table, context->mempool, $1); }
+                 ;
 
 flat_list:
           '(' flat_list_inner ')' { $$ = $2; }
@@ -79,8 +86,8 @@ lambda:
        ;
 
 assignment:
-           parsed_token '<' '-' lambda { $$ = l_assignment_new (context->mempool, $1, $4); }
-           ;
+           parsed_identifier '<' '-' lambda { $$ = l_assignment_new (context->mempool, $1, $4); }
+         ;
 
 %%
 
