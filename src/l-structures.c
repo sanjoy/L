@@ -27,6 +27,7 @@ l_tree_cons_vertical (LMempool *pool, LTreeNode *node, LTreeNode *tree)
 {
 	LTreeNode *new_node = l_mempool_alloc (pool, sizeof (LTreeNode));
 	new_node->first_child = node;
+	new_node->right_sibling = tree;
 	return new_node;
 }
 
