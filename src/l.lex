@@ -51,7 +51,7 @@
                                     return TOKEN;
                                 }
 
-.                               return ERROR;
+.                               return OTHER;
 
 %%
 

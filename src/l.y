@@ -21,7 +21,7 @@ void l_error (YYLTYPE *, LParserContext *, const char *);
 %}
 
 %token TOKEN
-%token ERROR
+%token OTHER
 
 %union {
      char *raw_token;
@@ -47,6 +47,7 @@ program:
 	   lambda program      { l_register_universal_node (context->mempool, NODE_LAMBDA, $1, context); }
      | assignment program  { l_register_universal_node (context->mempool, NODE_ASSIGNMENT, $1, context); }
      |                     { context->roots = NULL; }
+     | OTHER
      ;
 
 parsed_token:
