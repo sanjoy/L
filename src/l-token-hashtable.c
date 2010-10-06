@@ -2,15 +2,16 @@
 
 #include <string.h>
 
-struct _LTokenWrapper {
-	LToken *token;
-	struct _LTokenWrapper *next;
+struct _HashElement {
+	int token_id;
+	char *token_name;
+	struct _HashElement *next;
 };
 
-typedef struct _LTokenWrapper LTokenWrapper;
+typedef struct _HashElement HashElement;
 
 struct _LTokenHashtable {
-	LTokenWrapper **table;
+	HashElement **table;
 	LMempool *mempool;
 	int hash_len;
 	int token_id_max;
@@ -21,25 +22,30 @@ l_token_hashtable_new (LMempool *pool, int hash_len)
 {
 	LTokenHashtable *table = l_mempool_alloc (pool, sizeof (LTokenHashtable));
 	table->hash_len = hash_len;
-	table->table = l_mempool_alloc (pool, sizeof (LTokenWrapper *) * hash_len);
+	table->table = l_mempool_alloc (pool, sizeof (HashElement *) * hash_len);
 	table->mempool = pool;
 	return table;
 }
 
-LToken *
-l_token_hashtable_lookup (LTokenHashtable *table, char *text)
+static int
+string_to_slot (LTokenHashtable *table, char *text)
 {
 	int slot = 0;
-	LTokenWrapper *iter;
-	char *text_iter = text;
-
-	while (*text_iter)
-		slot += *text_iter++;
+	while (*text)
+		slot += *text++;
 	slot %= table->hash_len;
+	return slot;
+}
+
+static HashElement *
+hashtable_lookup (LTokenHashtable *table, char *text)
+{
+	int slot = string_to_slot (table, text);
+	HashElement *iter;
 
 	for (iter = table->table [slot]; iter; iter = iter->next) {
-		if (strcmp (iter->token->name, text) == 0)
-			return iter->token;
+		if (strcmp (iter->token_name, text) == 0)
+			return iter;
 	}
 	return NULL;
 }
@@ -47,31 +53,24 @@ l_token_hashtable_lookup (LTokenHashtable *table, char *text)
 LToken *
 l_token_hashtable_hash (LTokenHashtable *table, char *text)
 {
-	LToken *prev = l_token_hashtable_lookup (table, text);
+	HashElement *bucket = hashtable_lookup (table, text);
+	LToken *token = l_mempool_alloc (table->mempool, sizeof (LToken));
 
-	if (prev == NULL) {
-		LToken *token = l_mempool_alloc (table->mempool, sizeof (LToken));
+	if (bucket != NULL) {
+		token->name = bucket->token_name;
+		token->idx = bucket->token_id;
+		return token;
+	} else {
+		int slot = string_to_slot (table, text);
 		token->name = l_mempool_alloc (table->mempool, strlen (text) + 1);
 		strcpy (token->name, text);
 		token->idx = table->token_id_max++;
-
-		{
-
-			int slot = 0;
-			LTokenWrapper *wrapper = l_mempool_alloc (table->mempool, sizeof (LTokenWrapper));
-			wrapper->token = token;
-
-			while (*text)
-				slot += *text++;
-			slot %= table->hash_len;
-
-			wrapper->next = table->table [slot];
-			table->table [slot] = wrapper;
-
-		}
-
+		
+		bucket = l_mempool_alloc (table->mempool, sizeof (HashElement));
+		bucket->token_name = token->name;
+		bucket->token_id = token->idx;
+		bucket->next = table->table [slot];
+		table->table [slot] = bucket;
 		return token;
 	}
-
-	return prev;
 }

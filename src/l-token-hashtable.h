@@ -6,6 +6,5 @@
 LTokenHashtable *l_token_hashtable_new (LMempool *, int);
 
 LToken *l_token_hashtable_hash (LTokenHashtable *, char *);
-LToken *l_token_hashtable_lookup (LTokenHashtable *, char *);
 
 #endif /* __TOKEN__HASH__H*/
