@@ -1,5 +1,5 @@
 #include "l-structures.h"
-#include "l-parser-context.h"
+#include "l-context.h"
 #include "l-token-hashtable.h"
 
 #include <stdlib.h>
@@ -76,7 +76,7 @@ void
 l_register_universal_node (LMempool *pool, LUniversalNodeType type, void *data, void *ctx)
 {
 	LUniversalNode *new = l_mempool_alloc (pool, sizeof (LUniversalNode));
-	LParserContext *context = ctx;
+	LContext *context = ctx;
 	new->type = type;
 
 	if (type == NODE_ASSIGNMENT) {

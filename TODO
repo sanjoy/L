@@ -1,6 +1,4 @@
 TODO:
 
- * Throughly test the parser and lexer.
- * Write a routine for normal order evaluation.
  * Make params const wherever possible
- * Ren LParserContext to LContext and use it as a general state dump
+

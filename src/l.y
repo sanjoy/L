@@ -4,19 +4,19 @@
 %defines
 %locations
 
-%parse-param { LParserContext *context }
+%parse-param { LContext *context }
 %lex-param { void *scanner  }
 
 %{
 
 #include "l-structures.h"
-#include "l-parser-context.h"
+#include "l-context.h"
 #include "parser.h"
 
 #define scanner (context->scanner_data)
 
 int l_lex (YYSTYPE *, YYLTYPE *, void *);
-void l_error (YYLTYPE *, LParserContext *, const char *);
+void l_error (YYLTYPE *, LContext *, const char *);
 
 %}
 
@@ -87,10 +87,10 @@ assignment:
 #include <stdlib.h>
 #include "l-mempool.h"
 
-LParserContext *
-l_parser_context_new_from_file (FILE *file)
+LContext *
+l_context_new_from_file (FILE *file)
 {
-	LParserContext *context = malloc (sizeof (LParserContext));
+	LContext *context = malloc (sizeof (LContext));
 	context->input_string = NULL;
 	context->mempool = l_mempool_new ();
 	context->roots = NULL;
@@ -99,10 +99,10 @@ l_parser_context_new_from_file (FILE *file)
 	return context;
 }
 
-LParserContext *
-l_parser_context_new_from_string (char *str, size_t len)
+LContext *
+l_context_new_from_string (char *str, size_t len)
 {
-	LParserContext *context = malloc (sizeof (LParserContext));
+	LContext *context = malloc (sizeof (LContext));
 	size_t i = 0;
 	
 	context->mempool = l_mempool_new ();

@@ -21,12 +21,12 @@ typedef struct {
 
 	LParsingErrorFunc error_handler;
 
-} LParserContext;
+} LContext;
 
-LParserContext *l_parser_context_new_from_file (FILE *);
-LParserContext *l_parser_context_new_from_string (char *, size_t);
+LContext *l_context_new_from_file (FILE *);
+LContext *l_context_new_from_string (char *, size_t);
 
-int l_parse_using_context (LParserContext *);
-void l_destroy_parser_context (LParserContext *);
+int l_parse_using_context (LContext *);
+void l_destroy_context (LContext *);
 
 #endif /* __L__PARSER__CONTEXT__H */

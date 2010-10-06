@@ -1,11 +1,11 @@
 %{
 
-#include "l-parser-context.h"
+#include "l-context.h"
 #include "l-parser-tokens.h"
 
 #include <assert.h>
 	
-#define YY_EXTRA_TYPE LParserContext *
+#define YY_EXTRA_TYPE LContext *
 
 #define YY_USER_ACTION yylloc->first_line = yylineno;
 
@@ -64,21 +64,21 @@ l_wrap (yyscan_t scanner)
 }
 
 void
-l_error (YYLTYPE *loc, LParserContext *context, const char* err)
+l_error (YYLTYPE *loc, LContext *context, const char* err)
 {
 	if (context->error_handler != NULL)
 		context->error_handler (loc->first_line, err);
 }
 
 int
-l_parse_using_context (LParserContext *context)
+l_parse_using_context (LContext *context)
 {
 	l_lex_init_extra (context, &(context->scanner_data));
 	return l_parse (context);
 }
 
 void
-l_destroy_parser_context (LParserContext *context)
+l_destroy_context (LContext *context)
 {
 	l_lex_destroy (context->scanner_data);
 	l_mempool_destroy (context->mempool);

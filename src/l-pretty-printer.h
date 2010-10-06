@@ -2,11 +2,11 @@
 #define __L__PRETTY__PRINTER__H
 
 #include "l-structures.h"
-#include "l-parser-context.h"
+#include "l-context.h"
 
 typedef struct _LPrettyPrinter LPrettyPrinter;
 
-LPrettyPrinter *l_pretty_printer_new (LParserContext *);
+LPrettyPrinter *l_pretty_printer_new (LContext *);
 void l_pretty_printer_set_output (LPrettyPrinter *, FILE *);
 void l_pretty_printer_set_debug_output (LPrettyPrinter *, int);
 
