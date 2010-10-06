@@ -2,7 +2,8 @@
 
 CC:=cc
 OBJDIR:=build
-CFLAGS:=-c -I$(OBJDIR) -Isrc -Wall
+SRCDIR:=src
+CFLAGS:=-c -I$(OBJDIR) -I$(SRCDIR) -Wall
 LD:=$(CC) # Use $(CC) as linker so that I don't have to explicitly link to required
 		  # libraries
 LDFLAGS:=
@@ -10,7 +11,7 @@ LEX:=flex
 YACC:=bison
 VPATH:=src
 
-OBJECTS:=l-mempool.o l-structures.o main.o lexer.o lexer.c parser.o parser.c l-parser-tokens.h l-token-hashtable.o
+OBJECTS:=l-mempool.o l-structures.o main.o lexer.o lexer.c parser.o parser.c l-parser-tokens.h l-token-hashtable.o l-lambda.o
 
 FULL_OBJS:=$(addprefix $(OBJDIR)/, $(OBJECTS))
 
@@ -31,7 +32,7 @@ $(OBJDIR)/l-parser-tokens.h: l.y
 $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) $< -o$@
 
-$(filter-out $(OBJDIR)/l-parser-tokens.h, $(FULL_OBJS)): $(OBJDIR)/l-parser-tokens.h $(wildcard $(OBJDIR)/*.h) | $(OBJDIR)
+$(filter-out $(OBJDIR)/l-parser-tokens.h, $(FULL_OBJS)): $(OBJDIR)/l-parser-tokens.h $(wildcard $(OBJDIR)/*.h) $(wildcard $(SRCDIR)/*h) | $(OBJDIR)
 $(OBJDIR)/l-parser-tokens.h: | $(OBJDIR)
 
 $(OBJDIR):

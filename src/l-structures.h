@@ -5,14 +5,15 @@
 
 #include <stdio.h>
 
+typedef struct _LLambda LLambda;
+
 typedef struct {
 	char *name;
 	int idx, non_free_idx;
+	LLambda *parent_lambda;
 } LToken;
 
 typedef struct _LTokenHashtable LTokenHashtable;
-
-typedef struct _LLambda LLambda;
 
 struct _LTreeNode {
 	LToken *token;
@@ -78,7 +79,7 @@ void l_register_universal_node (LMempool *, LUniversalNodeType, void *, void *);
  */
 
 #define l_print_token(out,token) do { \
-		fprintf (out, "%s [%d] ", (token)->name, (token)->idx); \
+		fprintf (out, "%s [%d %d] ", (token)->name, (token)->idx, (token)->non_free_idx); \
 	} while (0)
 
 void l_print_tree (FILE *, LTreeNode *);

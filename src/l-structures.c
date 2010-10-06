@@ -54,6 +54,7 @@ l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body)
 	LLambda *new = l_mempool_alloc (pool, sizeof (LLambda));
 	new->args = args;
 	new->body = body;
+	l_adjust_free_variables (new);
 	return new;
 }
 
