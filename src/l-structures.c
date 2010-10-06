@@ -57,6 +57,7 @@ l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body)
 	new->args = args;
 	new->body = body;
 
+	l_normal_order_reduction (new);
 	l_adjust_free_variables (new);
 	
 	return new;

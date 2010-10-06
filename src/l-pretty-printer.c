@@ -30,7 +30,8 @@ void
 l_pretty_print_token (LPrettyPrinter *pprinter, LToken *token)
 {
 	if (pprinter->debug)
-		fprintf (pprinter->out, "%s [%d %d]", token->name, token->idx, token->non_free_idx);
+		fprintf (pprinter->out, "%s [%d %d] {%p}", token->name, token->idx,
+		         token->non_free_idx, token->parent_lambda);
 	else
 		fprintf (pprinter->out, "%s", token->name);
 }
@@ -52,7 +53,10 @@ print_lambda_full (LPrettyPrinter *pprinter, LLambda *lambda, int delta, int ini
 		PRINT_N_TIMES (pprinter->current_indent - delta, " ", pprinter->out);
 	pprinter->current_indent += fprintf (pprinter->out, "(L ");
 	l_pretty_print_list (pprinter, lambda->args);
-	fprintf (pprinter->out, "\n");
+	if (pprinter->debug)
+		fprintf (pprinter->out, " {%p}\n", lambda);
+	else
+		fprintf (pprinter->out, "\n");
 	print_tree_full (pprinter, lambda->body, 1, 0);
 	fprintf (pprinter->out, ")");
 	pprinter->current_indent = prev_current_indent;
