@@ -53,9 +53,12 @@ LLambda *
 l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body)
 {
 	LLambda *new = l_mempool_alloc (pool, sizeof (LLambda));
+
 	new->args = args;
 	new->body = body;
+
 	l_adjust_free_variables (new);
+	
 	return new;
 }
 
@@ -83,49 +86,4 @@ l_register_universal_node (LMempool *pool, LUniversalNodeType type, void *data, 
 
 	new->next = context->roots;
 	context->roots = new;
-}
-
-/* TODO Add pretty printing. */
-
-static void
-print_tree_recur (FILE *out, LTreeNode *node)
-{
-	if (node->first_child != NULL) {
-		fprintf (out, "(");
-		print_tree_recur (out, node->first_child);
-		fprintf (out, ")");
-	} else {
-		if (node->token != NULL) {
-			l_print_token (out, node->token);
-			fprintf (out, " ");
-		} else {
-			assert (node->lambda);
-			l_print_lambda (out, node->lambda);
-		}
-	}
-
-	if (node->right_sibling != NULL)
-		print_tree_recur (out, node->right_sibling);
-}
-
-void
-l_print_tree (FILE *out, LTreeNode *tree)
-{
-	fprintf (out, "(");
-	print_tree_recur (out, tree);
-	fprintf (out, ")");
-}
-
-void
-l_print_list (FILE *out, LListNode *list)
-{
-	LListNode *i;
-	fprintf (out, "(");
-	for (i = list; i != NULL; i = i->next) {
-		if (list->token != NULL) {
-			l_print_token (out, i->token);
-			fprintf (out, " ");
-		}
-	}
-	fprintf (out, ")");
 }

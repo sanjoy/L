@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "l-parser-context.h"
+#include "l-pretty-printer.h"
 
 void
 l_error_handler (int line, const char *err)
@@ -13,10 +14,11 @@ main (void)
 {
 	LParserContext *ctx = l_parser_context_new_from_file (stdin);
 	LUniversalNode *nd;
+	LPrettyPrinter *pprinter = l_pretty_printer_new (ctx);
 	ctx->error_handler = l_error_handler;
 	l_parse_using_context (ctx);
 	for (nd = ctx->roots; nd; nd = nd->next) {
-		l_print_universal_node (stdout, nd);
+		l_pretty_print_universal_node (pprinter, nd);
 	}
 	l_destroy_parser_context (ctx);
 	return 0;

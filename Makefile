@@ -11,7 +11,7 @@ LEX:=flex
 YACC:=bison
 VPATH:=src
 
-OBJECTS:=l-mempool.o l-structures.o main.o lexer.o lexer.c parser.o parser.c l-parser-tokens.h l-token-hashtable.o l-lambda.o
+OBJECTS:=l-mempool.o l-structures.o main.o lexer.o lexer.c parser.o parser.c l-parser-tokens.h l-token-hashtable.o l-lambda.o l-pretty-printer.o
 
 FULL_OBJS:=$(addprefix $(OBJDIR)/, $(OBJECTS))
 
