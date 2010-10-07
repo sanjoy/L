@@ -76,11 +76,11 @@ nested_list_inner:
                   nested_list nested_list_inner  { $$ = l_tree_cons_vertical (context->mempool, $1, $2); }
                 | parsed_token nested_list_inner { $$ = l_tree_cons_horizontal (context->mempool, $1, $2); }
 			    | lambda nested_list_inner       { $$ = l_tree_cons_lambda (context->mempool, $1, $2); }
-				|                                { $$ = 0; }
+				| parsed_token                   { $$ = l_tree_cons_horizontal (context->mempool, $1, NULL); }
 				;
 
 lambda:
-       '(' 'L' flat_list nested_list ')' { $$ = l_lambda_new (context->mempool, $3, $4); }
+       '(' 'L' flat_list nested_list ')' { $$ = l_lambda_new (context->mempool, $3, $4, context); }
        ;
 
 assignment:

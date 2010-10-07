@@ -51,7 +51,7 @@ l_list_cons (LMempool *pool, LToken *token, LListNode *rest)
 }
 
 LLambda *
-l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body)
+l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body, void *context)
 {
 	LLambda *new = l_mempool_alloc (pool, sizeof (LLambda));
 

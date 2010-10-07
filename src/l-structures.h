@@ -57,7 +57,7 @@ LTreeNode *l_tree_cons_lambda (LMempool *, LLambda *, LTreeNode *);
 
 LListNode *l_list_cons (LMempool *, LToken *, LListNode *);
 
-LLambda *l_lambda_new (LMempool *, LListNode *, LTreeNode *);
+LLambda *l_lambda_new (LMempool *, LListNode *, LTreeNode *, void *);
 LAssignment *l_assignment_new (LMempool *, LToken *, LLambda *);
 
 void l_register_global_node (LMempool *, LNodeType, void *, void *);
