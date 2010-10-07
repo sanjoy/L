@@ -1,6 +1,7 @@
 #include "l-structures.h"
 #include "l-context.h"
 #include "l-token-hashtable.h"
+#include "l-lambda.h"
 
 #include <stdlib.h>
 #include <string.h>
