@@ -20,9 +20,9 @@ void l_error (YYLTYPE *, LContext *, const char *);
 
 %}
 
-%token IDENTIFIER
-%token TOKEN
-%token OTHER
+%token IDENTIFIER "identifier"
+%token TOKEN      "token"
+%token END 0      "end of file"
 
 %union {
      char *raw_token;
@@ -47,6 +47,7 @@ void l_error (YYLTYPE *, LContext *, const char *);
 program:
 	   program lambda      { l_register_global_node (context->mempool, NODE_LAMBDA, $2, context); }
      | program assignment  { l_register_global_node (context->mempool, NODE_ASSIGNMENT, $2, context); }
+     | program END         { return 0; }
      |
      ;
 
@@ -99,6 +100,7 @@ l_context_new_from_file (FILE *file)
 	context->mempool = l_mempool_new ();
 	context->input_file = file;
 	context->hash_table = l_token_hashtable_new (context->mempool, 97);
+	context->global_notifier = NULL;
 	return context;
 }
 
@@ -116,5 +118,6 @@ l_context_new_from_string (char *str, size_t len)
 	while (i < len && *str != '\0')
 		context->input_string [i++] = *str++;
 	context->input_string [i] = '\0';
+	context->global_notifier = NULL;
 	return context;
 }

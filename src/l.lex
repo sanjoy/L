@@ -29,6 +29,8 @@
         }	                                           \
 	} while (0)
 
+#define ECHO
+
 %}
 
 %option reentrant
@@ -56,7 +58,7 @@
                                      return IDENTIFIER;
                                 }
 
-.                               return OTHER;
+<<EOF>>                         return END;
 
 %%
 
