@@ -112,3 +112,29 @@ l_normal_order_reduction (LLambda *lambda)
 	lambda->body = remove_single_element_lists (lambda->body);
 }
 
+static void
+subst_assignments (LTreeNode *body, LLambda *value, int token_id)
+{
+	if (body == NULL)
+		return;
+	
+	if (body->token != NULL && body->token->idx == token_id) {
+		body->token = NULL;
+		body->lambda = value;
+	} else if (body->lambda != NULL) {
+		subst_assignments (body->lambda->body, value, token_id);
+	}
+
+	subst_assignments (body->right_sibling, value, token_id);
+	subst_assignments (body->first_child, value, token_id);
+}
+
+void
+l_substitute_assignments (LLambda *lambda, LContext *ctx)
+{
+	LAssignment *assign_iter;
+
+	for (assign_iter = ctx->global_assignments; assign_iter; assign_iter = assign_iter->next) {
+		subst_assignments (lambda->body, assign_iter->rhs, assign_iter->lhs->idx);
+	}
+}

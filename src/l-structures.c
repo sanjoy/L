@@ -54,12 +54,20 @@ LLambda *
 l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body, void *context)
 {
 	LLambda *new = l_mempool_alloc (pool, sizeof (LLambda));
+	LContext *ctx = context;
 
 	new->args = args;
 	new->body = body;
 
-	l_normal_order_reduction (new);
+	l_substitute_assignments (new, ctx);
 	l_adjust_free_variables (new);
+	l_normal_order_reduction (new);
+
+	/*
+	 * Do something more intelligent in the (L () (L (...) (...))) case.
+	 */
+	if (new->body->lambda != NULL && new->body->right_sibling == NULL && new->args == NULL)
+		return new->body->lambda;
 	
 	return new;
 }

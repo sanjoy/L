@@ -48,14 +48,14 @@
 
 [()<\-]                         return *yytext;
 
-[a-zA-Z0-9*+]+                  {
-                                    yylval->raw_token = yytext;
-                                    return TOKEN;
-                                }
-
 :[A-Z][a-zA-Z0-9]+              {
                                      yylval->raw_token = yytext;
                                      return IDENTIFIER;
+                                }
+
+[:a-zA-Z0-9*+]+                 {
+                                    yylval->raw_token = yytext;
+                                    return TOKEN;
                                 }
 
 <<EOF>>                         return END;
