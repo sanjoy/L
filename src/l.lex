@@ -53,7 +53,7 @@
                                     return TOKEN;
                                 }
 
-:[A-Z0-9]+                      {
+:[A-Z][a-zA-Z0-9]+              {
                                      yylval->raw_token = yytext;
                                      return IDENTIFIER;
                                 }
