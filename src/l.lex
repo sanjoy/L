@@ -73,8 +73,7 @@ l_wrap (yyscan_t scanner)
 void
 l_error (YYLTYPE *loc, LContext *context, const char* err)
 {
-	if (context->error_handler != NULL)
-		context->error_handler (loc->first_line, err);
+	CALL_ERROR_HANDLER (context, err);
 }
 
 int

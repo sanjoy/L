@@ -4,9 +4,9 @@
 #include "l-pretty-printer.h"
 
 void
-l_error_handler (int line, const char *err)
+l_error_handler (void *user_data, const char *err)
 {
-	fprintf (stderr, "Parsing error: %d : %s\n", line, err);
+	fprintf (stderr, "ERROR: %s\n", err);
 }
 
 static void

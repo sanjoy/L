@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-typedef void (*LParsingErrorFunc) (int, const char *);
+typedef void (*LParsingErrorFunc) (void *, const char *);
 typedef void (*LGlobalNotifier) (void *, LNodeType, void *);
 
 typedef struct {
@@ -22,6 +22,7 @@ typedef struct {
 	FILE *input_file;
 
 	LParsingErrorFunc error_handler;
+	void *error_handler_data;
 
 	void *global_notifier_data;
 	LGlobalNotifier global_notifier ;
@@ -31,6 +32,11 @@ typedef struct {
 #define CALL_GLOBAL_NOTIFIER(ctx,type,data) do { \
 		if ((ctx)->global_notifier != NULL) \
 			(ctx)->global_notifier ((ctx)->global_notifier_data, type, data); \
+	} while (0)
+
+#define CALL_ERROR_HANDLER(ctx,err) do { \
+		if ((ctx)->error_handler != NULL) \
+			(ctx)->error_handler ((ctx)->error_handler_data, err); \
 	} while (0)
 
 LContext *l_context_new_from_file (FILE *);
