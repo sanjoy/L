@@ -10,7 +10,7 @@ typedef struct _LLambda LLambda;
 typedef struct {
 	char *name;
 	int idx, non_free_idx;
-	LLambda *parent_lambda;
+	LLambda *parent;
 } LToken;
 
 typedef struct _LTokenHashtable LTokenHashtable;
@@ -18,7 +18,7 @@ typedef struct _LTokenHashtable LTokenHashtable;
 struct _LTreeNode {
 	LToken *token;
 	LLambda *lambda;
-	struct _LTreeNode *right_sibling, *first_child;
+	struct LTreeNode *left, *right;
 };
 
 typedef struct _LTreeNode LTreeNode;
@@ -51,9 +51,9 @@ typedef enum {
 
 LToken *l_token_new (LTokenHashtable *, LMempool *, char *);
 
-LTreeNode *l_tree_cons_horizontal (LMempool *, LToken *, LTreeNode *);
-LTreeNode *l_tree_cons_vertical (LMempool *, LTreeNode *, LTreeNode *);
-LTreeNode *l_tree_cons_lambda (LMempool *, LLambda *, LTreeNode *);
+LTreeNode *l_tree_cons_tree_tree (LMempool *, LTreeNode *, LTreeNode *);
+LTreeNode *l_tree_cons_tree_token (LMempool *, LTreeNode *, LToken *);
+LTreeNode *l_tree_cons_tree_lambda (LMempool *, LLambda *, LTreeNode *);
 
 LListNode *l_list_cons (LMempool *, LToken *, LListNode *);
 
