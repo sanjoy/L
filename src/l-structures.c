@@ -55,6 +55,10 @@ l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body, void *context)
 {
 	LLambda *new = l_mempool_alloc (pool, sizeof (LLambda));
 	LContext *ctx = context;
+	
+	if (body == NULL) {
+		CALL_ERROR_HANDLER (ctx, "Lambdas with empty bodies not allowed.");
+	}
 
 	new->args = args;
 	new->body = body;

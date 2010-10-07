@@ -77,8 +77,7 @@ nested_list_inner:
                 | parsed_token nested_list_inner      { $$ = l_tree_cons_horizontal (context->mempool, $1, $2); }
                 | parsed_identifier nested_list_inner { $$ = l_tree_cons_horizontal (context->mempool, $1, $2); }
                 | lambda nested_list_inner            { $$ = l_tree_cons_lambda (context->mempool, $1, $2); }
-                | parsed_token                        { $$ = l_tree_cons_horizontal (context->mempool, $1, NULL); }
-                | parsed_identifier                   { $$ = l_tree_cons_horizontal (context->mempool, $1, NULL); }
+                |                                     { $$ = NULL; }
 				;
 
 lambda:

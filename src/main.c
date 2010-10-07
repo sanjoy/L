@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "l-context.h"
 #include "l-pretty-printer.h"
@@ -7,6 +8,7 @@ void
 l_error_handler (void *user_data, const char *err)
 {
 	fprintf (stderr, "ERROR: %s\n", err);
+	exit (-1);
 }
 
 static void
