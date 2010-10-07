@@ -74,18 +74,22 @@ l_assignment_new (LMempool *pool, LToken *tok, LLambda *lam)
 }
 
 void
-l_register_universal_node (LMempool *pool, LUniversalNodeType type, void *data, void *ctx)
+l_register_global_node (LMempool *pool, LNodeType type, void *data, void *context)
 {
-	LUniversalNode *new = l_mempool_alloc (pool, sizeof (LUniversalNode));
-	LContext *context = ctx;
-	new->type = type;
+	LContext *ctx = context;
 
-	if (type == NODE_ASSIGNMENT) {
-		new->assignment = data;
-	} else {
-		new->lambda = data;
+	assert (type == NODE_LAMBDA || type == NODE_ASSIGNMENT);
+
+	if (type == NODE_LAMBDA) {
+		LLambda *new = data;
+		new->next = ctx->global_lambdas;
+		ctx->global_lambdas = new;
+		CALL_GLOBAL_NOTIFIER (ctx, NODE_LAMBDA, new);
+	} else if (type == NODE_ASSIGNMENT) {
+		LAssignment *new = data;
+		new->next = ctx->global_assignments;
+		ctx->global_assignments = new;
+		CALL_GLOBAL_NOTIFIER (ctx, NODE_ASSIGNMENT, new);
 	}
 
-	new->next = context->roots;
-	context->roots = new;
 }

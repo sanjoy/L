@@ -33,32 +33,21 @@ typedef struct _LListNode LListNode;
 struct _LLambda {
 	LListNode *args;
 	LTreeNode *body;
+	struct _LLambda *next;
 };
 
-typedef struct {
+struct _LAssignment {
 	LToken *lhs;
 	LLambda *rhs;
-} LAssignment;
+	struct _LAssignment *next;
+};
+
+typedef struct _LAssignment LAssignment;
 
 typedef enum {
 	NODE_ASSIGNMENT,
 	NODE_LAMBDA
-} LUniversalNodeType;
-
-struct _LUniversalNode {
-
-	LUniversalNodeType type;
-
-	union {
-		LAssignment *assignment;
-		LLambda *lambda;
-	};
-	
-	struct _LUniversalNode *next;
-
-};
-
-typedef struct _LUniversalNode LUniversalNode;
+} LNodeType;
 
 LToken *l_token_new (LTokenHashtable *, LMempool *, char *);
 
@@ -71,6 +60,6 @@ LListNode *l_list_cons (LMempool *, LToken *, LListNode *);
 LLambda *l_lambda_new (LMempool *, LListNode *, LTreeNode *);
 LAssignment *l_assignment_new (LMempool *, LToken *, LLambda *);
 
-void l_register_universal_node (LMempool *, LUniversalNodeType, void *, void *);
+void l_register_global_node (LMempool *, LNodeType, void *, void *);
 
 #endif /* __STRUCTURES__H */

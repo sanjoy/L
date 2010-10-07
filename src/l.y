@@ -32,7 +32,6 @@ void l_error (YYLTYPE *, LContext *, const char *);
      LTreeNode *tree;
      LLambda *lambda;
      LAssignment *assignment;
-     LUniversalNode *universal;
 };
 
 %type <identifier> IDENTIFIER
@@ -42,15 +41,13 @@ void l_error (YYLTYPE *, LContext *, const char *);
 %type <tree>       nested_list nested_list_inner
 %type <lambda>     lambda
 %type <assignment> assignment
-%type <universal>  program
 
 %%
 
 program:
-	   lambda program      { l_register_universal_node (context->mempool, NODE_LAMBDA, $1, context); }
-     | assignment program  { l_register_universal_node (context->mempool, NODE_ASSIGNMENT, $1, context); }
-     |                     { context->roots = NULL; }
-     | OTHER
+	   program lambda      { l_register_global_node (context->mempool, NODE_LAMBDA, $2, context); }
+     | program assignment  { l_register_global_node (context->mempool, NODE_ASSIGNMENT, $2, context); }
+     |
      ;
 
 parsed_token:
@@ -100,7 +97,6 @@ l_context_new_from_file (FILE *file)
 	LContext *context = malloc (sizeof (LContext));
 	context->input_string = NULL;
 	context->mempool = l_mempool_new ();
-	context->roots = NULL;
 	context->input_file = file;
 	context->hash_table = l_token_hashtable_new (context->mempool, 97);
 	return context;
@@ -113,7 +109,6 @@ l_context_new_from_string (char *str, size_t len)
 	size_t i = 0;
 	
 	context->mempool = l_mempool_new ();
-	context->roots = NULL;
 	context->input_file = NULL;
 	context->hash_table = l_token_hashtable_new (context->mempool, 97);
 	

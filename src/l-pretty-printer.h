@@ -16,11 +16,4 @@ void l_pretty_print_list (LPrettyPrinter *, LListNode *);
 void l_pretty_print_lambda (LPrettyPrinter *, LLambda *);
 void l_pretty_print_assignment (LPrettyPrinter *, LAssignment *);
 
-#define l_pretty_print_universal_node(pprinter, node) do { \
-	if ((node)->type == NODE_ASSIGNMENT) \
-		l_pretty_print_assignment (pprinter, (node)->assignment); \
-	else \
-		l_pretty_print_lambda (pprinter, (node)->lambda); \
-	} while (0)
-
 #endif /* __L__PRETTY__PRINTER__H*/

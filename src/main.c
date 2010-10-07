@@ -9,17 +9,27 @@ l_error_handler (int line, const char *err)
 	fprintf (stderr, "Parsing error: %d : %s\n", line, err);
 }
 
+static void
+print_function (void *user_data, LNodeType node_type, void *data)
+{
+	if (node_type == NODE_ASSIGNMENT) {
+		l_pretty_print_assignment (user_data, data);
+	} else if (node_type == NODE_LAMBDA) {
+		l_pretty_print_lambda (user_data, data);
+	}
+}
+
 int
 main (void)
 {
 	LContext *ctx = l_context_new_from_file (stdin);
-	LUniversalNode *nd;
-	LPrettyPrinter *pprinter = l_pretty_printer_new (ctx);
+
+	ctx->global_notifier_data = l_pretty_printer_new (ctx);
 	ctx->error_handler = l_error_handler;
+	ctx->global_notifier = print_function;
+
 	l_parse_using_context (ctx);
-	for (nd = ctx->roots; nd; nd = nd->next) {
-		l_pretty_print_universal_node (pprinter, nd);
-	}
+
 	l_destroy_context (ctx);
 	return 0;
 }
