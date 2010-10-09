@@ -46,7 +46,7 @@
 
 [()=.L;]                        return *yytext;
 
-:[A-Z][a-zA-Z0-9]+              {
+:[A-Z][a-zA-Z0-9]*              {
                                      yylval->identifier = l_token_new (yyextra->hash_table, yyextra->mempool, yytext);
                                      return IDENTIFIER;
                                 }
