@@ -5,7 +5,7 @@
 %locations
 
 %parse-param { LContext *context }
-%lex-param { void *scanner  }
+%lex-param   { void *scanner }
 
 %{
 
@@ -34,7 +34,7 @@ void l_error (YYLTYPE *, LContext *, const char *);
 };
 
 %type <identifier> IDENTIFIER
-%type <token>  TOKEN
+%type <token>      TOKEN
 %type <list>       list
 %type <tree>       tree
 %type <lambda>     lambda
@@ -43,32 +43,31 @@ void l_error (YYLTYPE *, LContext *, const char *);
 %%
 
 program:
-	   program lambda      { l_register_global_node (context->mempool, NODE_LAMBDA, $2, context); }
-     | program assignment  { l_register_global_node (context->mempool, NODE_ASSIGNMENT, $2, context); }
-     | program END         { return 0; }
+	   program lambda ';'      { l_register_global_node (context->mempool, NODE_LAMBDA, $2, context); }
+     | program assignment ';'  { l_register_global_node (context->mempool, NODE_ASSIGNMENT, $2, context); }
+     | program END             { return 0; }
      |
      ;
 
 list:
-       TOKEN flat_list { $$ = l_list_cons (context->mempool, $1, $2); }
-     |                        { $$ = NULL; }
+       TOKEN list { $$ = l_list_cons (context->mempool, $1, $2, context); }
+     |            { $$ = NULL; }
      ;
 
 tree:
-       '(' tree ')'  { $$ = $2; }
-     | tree parsed_token    { $$ = l_tree_cons_vertical (context->mempool, $1, $2); }
-     | tree parsed_identifier
-     | tree tree
-     | tree lambda
-     | 
+       tree TOKEN             { $$ = l_tree_cons_tree_token  (context->mempool, $1, $2); }
+     | tree IDENTIFIER        { $$ = l_tree_cons_tree_token  (context->mempool, $1, $2); }
+     | tree '(' tree  ')'     { $$ = l_tree_cons_tree_tree   (context->mempool, $1, $3); }
+     | tree '(' lambda ')'    { $$ = l_tree_cons_tree_lambda (context->mempool, $1, $3); }
+     |                        { $$ = NULL; }
      ;
 
 lambda:
-         'L' flat_list '.' nested_list
+         'L' list '.' tree  { $$ = l_lambda_new (context->mempool, $2, $4, context); }
        ;
 
 assignment:
-             IDENTIFIER '=' lambda { $$ = l_assignment_new (context->mempool, $1, $4); }
+            IDENTIFIER '=' lambda { $$ = l_assignment_new (context->mempool, $1, $3); }
           ;
 
 %%

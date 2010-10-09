@@ -18,8 +18,10 @@ typedef struct _LTokenHashtable LTokenHashtable;
 struct _LTreeNode {
 	LToken *token;
 	LLambda *lambda;
-	struct LTreeNode *left, *right;
+	struct _LTreeNode *left, *right;
 };
+
+#define L_TREE_NODE_IS_APPLICATION(node) ((node)->token == NULL && (node)->lambda == NULL)
 
 typedef struct _LTreeNode LTreeNode;
 
@@ -53,9 +55,9 @@ LToken *l_token_new (LTokenHashtable *, LMempool *, char *);
 
 LTreeNode *l_tree_cons_tree_tree (LMempool *, LTreeNode *, LTreeNode *);
 LTreeNode *l_tree_cons_tree_token (LMempool *, LTreeNode *, LToken *);
-LTreeNode *l_tree_cons_tree_lambda (LMempool *, LLambda *, LTreeNode *);
+LTreeNode *l_tree_cons_tree_lambda (LMempool *, LTreeNode *, LLambda *);
 
-LListNode *l_list_cons (LMempool *, LToken *, LListNode *);
+LListNode *l_list_cons (LMempool *, LToken *, LListNode *, void *);
 
 LLambda *l_lambda_new (LMempool *, LListNode *, LTreeNode *, void *);
 LAssignment *l_assignment_new (LMempool *, LToken *, LLambda *);

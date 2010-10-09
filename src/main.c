@@ -19,6 +19,7 @@ print_function (void *user_data, LNodeType node_type, void *data)
 	} else if (node_type == NODE_LAMBDA) {
 		l_pretty_print_lambda (user_data, data);
 	}
+	printf ("\n");
 }
 
 int

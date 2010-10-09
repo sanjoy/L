@@ -1,6 +1,8 @@
 #include "l-lambda.h"
 #include "l-structures.h"
 
+#if 0
+
 static void
 replace_nonfree (LTreeNode *node, LLambda *parent, int param_idx, int token_idx)
 {
@@ -138,3 +140,5 @@ l_substitute_assignments (LLambda *lambda, LContext *ctx)
 		subst_assignments (lambda->body, assign_iter->rhs, assign_iter->lhs->idx);
 	}
 }
+
+#endif // #if 0

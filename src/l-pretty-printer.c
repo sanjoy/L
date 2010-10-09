@@ -30,8 +30,7 @@ void
 l_pretty_print_token (LPrettyPrinter *pprinter, LToken *token)
 {
 	if (pprinter->debug)
-		fprintf (pprinter->out, "%s [%d %d] {%p}", token->name, token->idx,
-		         token->non_free_idx, token->parent_lambda);
+		fprintf (pprinter->out, "%s [%d %d] {%p}", token->name, token->idx, token->non_free_idx, token->parent);
 	else
 		fprintf (pprinter->out, "%s", token->name);
 }
@@ -42,95 +41,74 @@ l_pretty_print_token (LPrettyPrinter *pprinter, LToken *token)
 			fprintf (out, text); \
 	} while (0)
 
-static void
-print_tree_full (LPrettyPrinter *, LTreeNode *, int, int);
-
-static void
-print_lambda_full (LPrettyPrinter *pprinter, LLambda *lambda, int delta, int init_indent)
-{
-	int prev_current_indent = pprinter->current_indent;
-	if (init_indent)
-		PRINT_N_TIMES (pprinter->current_indent - delta, " ", pprinter->out);
-	pprinter->current_indent += fprintf (pprinter->out, "(L ");
-	l_pretty_print_list (pprinter, lambda->args);
-	if (pprinter->debug)
-		fprintf (pprinter->out, " {%p}\n", lambda);
-	else
-		fprintf (pprinter->out, "\n");
-	print_tree_full (pprinter, lambda->body, 1, 0);
-	fprintf (pprinter->out, ")");
-	pprinter->current_indent = prev_current_indent;
-}
+static int
+print_tree_full (LPrettyPrinter *, LTreeNode *);
 
 void
 l_pretty_print_lambda (LPrettyPrinter *pprinter, LLambda *lambda)
 {
-	print_lambda_full (pprinter, lambda, 0, 1);
-	fprintf (pprinter->out, "\n");
+	fprintf (pprinter->out, "L ");
+	l_pretty_print_list (pprinter, lambda->args);
+	fprintf (pprinter->out, " . ");
+	l_pretty_print_tree (pprinter, lambda->body);
 }
 
-static void
-print_tree_full (LPrettyPrinter *pprinter, LTreeNode *node, int init_indent, int init_delta)
+static int
+print_tree_full (LPrettyPrinter *pprinter, LTreeNode *node)
 {
-	LTreeNode *iter;
-	int prev_current_indent = pprinter->current_indent;
+	int print_paren, first_element;
+	if (node != NULL)
+		first_element = print_tree_full (pprinter, node->left);
+	else
+		return 1;
 
-	if (init_indent)
-		PRINT_N_TIMES (prev_current_indent - init_delta, " ", pprinter->out);
-	
-	pprinter->current_indent += fprintf (pprinter->out, "(");
-	for (iter = node; iter; iter = iter->right_sibling) {
-		if (iter->first_child != NULL) {
-			if (node != iter)
-				fprintf (pprinter->out, "\n");
-			print_tree_full (pprinter, iter->first_child, node != iter, 0);
-			if (iter->right_sibling != NULL) {
-				fprintf (pprinter->out, "\n");
-				PRINT_N_TIMES (prev_current_indent + 1, " ", pprinter->out);
-			}
-		} else if (iter->token != NULL) {
-			l_pretty_print_token (pprinter, iter->token);
-			if (iter->right_sibling != NULL)
-				fprintf (pprinter->out, " ");
-		} else {
-			print_lambda_full (pprinter, iter->lambda, 0, node != iter);
-			if (iter->right_sibling != NULL)
-				fprintf (pprinter->out, "\n");
-		}
+	if (!first_element)
+		fprintf (pprinter->out, " ");
+
+	if (node->token != NULL) {
+		l_pretty_print_token (pprinter, node->token);
+	} else if (node->lambda != NULL) {
+		fprintf (pprinter->out, "(");
+		l_pretty_print_lambda (pprinter, node->lambda);
+		fprintf (pprinter->out, ")");
 	}
 	
-	fprintf (pprinter->out, ")");
-	pprinter->current_indent = prev_current_indent;
+	print_paren = (node->right != NULL && (L_TREE_NODE_IS_APPLICATION (node->right) || node->right->lambda != NULL));
+
+	if (print_paren)
+		fprintf (pprinter->out, "(");
+
+	print_tree_full (pprinter, node->right);
+
+	if (print_paren)
+		fprintf (pprinter->out, ")");
+
+	return 0;
 }
 
 void
 l_pretty_print_tree (LPrettyPrinter *pprinter, LTreeNode *tree)
 {
-	print_tree_full (pprinter, tree, 0, 0);
+	print_tree_full (pprinter, tree);
 }
 
 void
 l_pretty_print_list (LPrettyPrinter *pprinter, LListNode *list)
 {
 	LListNode *i;
-	fprintf (pprinter->out, "(");
 	for (i = list; i; i = i->next) {
 		l_pretty_print_token (pprinter, i->token);
 		if (i->next != NULL)
 			fprintf (pprinter->out, " ");
 	}
-	fprintf (pprinter->out, ")");
 }
 
 void
 l_pretty_print_assignment (LPrettyPrinter *pprinter, LAssignment *assign)
 {
-	int prev_current_indent = pprinter->current_indent;
-	int delta = fprintf (pprinter->out, "%s <- ", assign->lhs->name);
-	pprinter->current_indent += delta;
+	fprintf (pprinter->out, "%s <- ", assign->lhs->name);
 
-	print_lambda_full (pprinter, assign->rhs, delta, 1);
+	l_pretty_print_lambda (pprinter, assign->rhs);
 
 	fprintf (pprinter->out, "\n");
-	pprinter->current_indent = prev_current_indent;
 }

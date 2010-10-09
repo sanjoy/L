@@ -44,18 +44,16 @@
 
 [ \t\n]+                        ;
 
-"L"                             return *yytext;
-
-[()<\-]                         return *yytext;
+[()=.L;]                        return *yytext;
 
 :[A-Z][a-zA-Z0-9]+              {
-                                     yylval->raw_token = yytext;
+                                     yylval->identifier = l_token_new (yyextra->hash_table, yyextra->mempool, yytext);
                                      return IDENTIFIER;
                                 }
 
 [a-zA-Z0-9*+]+                  {
-                                    yylval->raw_token = yytext;
-                                    return TOKEN;
+                                     yylval->token = l_token_new (yyextra->hash_table, yyextra->mempool, yytext);
+                                     return TOKEN;
                                 }
 
 <<EOF>>                         return END;
