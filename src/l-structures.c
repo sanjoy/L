@@ -89,7 +89,7 @@ l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body, void *context)
 	new->args = args;
 	new->body = body;
 
-	//	l_substitute_assignments (new, ctx);
+	l_substitute_assignments (new, ctx);
 	l_adjust_bound_variables (new);
 	//	l_normal_order_reduction (new);
 

@@ -1,6 +1,8 @@
 #include "l-lambda.h"
 #include "l-structures.h"
 
+#include <stdlib.h>
+
 static void
 replace_nonfree (LTreeNode *node, LLambda *parent, int param_idx, int token_idx)
 {
@@ -28,107 +30,96 @@ l_adjust_bound_variables (LLambda *lambda)
 	}
 }
 
-#if 0
+struct _ReplaceList {
+	LLambda *new, *old;
+	struct _ReplaceList *next;
+};
 
-static void
-replace_in_body (LTreeNode *node, LLambda *parent, int param_idx, LTreeNode *value)
+typedef struct _ReplaceList ReplaceList;
+
+static LLambda *copy_lambda (LMempool *, LLambda *, ReplaceList *);
+
+static LToken *
+copy_token (LMempool *pool, LToken *token, ReplaceList *repl)
 {
-	if (node->lambda != NULL) {
-		replace_in_body (node->lambda->body, parent, param_idx, value);
-	} else if (node->token != NULL && node->token->parent_lambda == parent && node->token->non_free_idx == param_idx) {
-		node->token = value->token;
-		node->lambda = value->lambda;
-		node->first_child = value->first_child;
+	LToken *new = l_mempool_alloc (pool, sizeof (LToken));
+	new->name = token->name;
+	new->idx = token->idx;
+	new->non_free_idx = token->idx;
+
+	if (token->parent != NULL) {
+		ReplaceList *iter;
+		for (iter = repl; iter; iter = iter->next) {
+			if (iter->old == token->parent)
+				new->parent = iter->new;
+		}
 	}
-	if (node->first_child != NULL)
-		replace_in_body (node->first_child, parent, param_idx, value);
-	if (node->right_sibling != NULL)
-		replace_in_body (node->right_sibling, parent, param_idx, value);
+	return new;
 }
 
-void
-l_apply (LLambda *function, LTreeNode *param)
+static LTreeNode *
+copy_tree (LMempool *pool, LTreeNode *node, ReplaceList *repl)
 {
-	if (function->args) {
-		replace_in_body (function->body, function, function->args->token->non_free_idx, param);
-		function->args = function->args->next;
-	}
-}
-
-static void
-normal_order_reduction_recursive (LTreeNode *body)
-{
-	if (body == NULL)
-		return;
+	LTreeNode *new;
 	
-	if (body->lambda != NULL) {
-		while (body->right_sibling != NULL && body->lambda->args != NULL) {
-			l_apply (body->lambda, body->right_sibling);
-			body->right_sibling = body->right_sibling->right_sibling;
-		}
-	}
-	if (body->lambda != NULL)
-			normal_order_reduction_recursive (body->lambda->body);
-	normal_order_reduction_recursive (body->right_sibling);
-	normal_order_reduction_recursive (body->first_child);
-}
+	if (node == NULL)
 
-static LTreeNode *
-remove_empty_lambdas (LTreeNode *node)
-{
+		return NULL;
+	new = l_mempool_alloc (pool, sizeof (LTreeNode));
+	if (node->token != NULL)
+		new->token = copy_token (pool, node->token, repl);
 	if (node->lambda != NULL)
-		node->lambda->body = remove_empty_lambdas (node->lambda->body);
-	if (node->first_child != NULL)
-		node->first_child = remove_empty_lambdas (node->first_child);
-	if (node->right_sibling)
-		node->right_sibling = remove_empty_lambdas (node->right_sibling);
-	if (node->lambda != NULL && node->lambda->args == NULL)
-		return node->lambda->body;
-	else
-		return node;
+		new->lambda = copy_lambda (pool, node->lambda, repl);
+	new->left = copy_tree (pool, node->left, repl);
+	new->right = copy_tree (pool, node->right, repl);
+
+	return new;
 }
 
-static LTreeNode *
-remove_single_element_lists (LTreeNode *node)
+static LListNode *
+copy_list (LMempool *pool, LListNode *list, ReplaceList *repl)
 {
-	if (node->lambda != NULL)
-		node->lambda->body = remove_single_element_lists (node->lambda->body);
-	if (node->first_child != NULL) {
-		if (node->first_child->right_sibling == NULL) {
-			node->first_child->right_sibling = node->right_sibling;
-			node = node->first_child;
-		} else {
-			node->first_child = remove_single_element_lists (node->first_child);
-		}
-	}
-	if (node->right_sibling != NULL)
-		node->right_sibling = remove_single_element_lists (node->right_sibling);
-	return node;
+	LListNode *new;
+	if (list == NULL)
+		return NULL;
+	new = l_mempool_alloc (pool, sizeof (LListNode));
+	new->token = copy_token (pool, list->token, repl);
+	new->next = copy_list (pool, list->next, repl);
+	return new;
 }
 
-void
-l_normal_order_reduction (LLambda *lambda)
+static LLambda *
+copy_lambda (LMempool *pool, LLambda *lambda, ReplaceList *repl)
 {
-	normal_order_reduction_recursive (lambda->body);
-	lambda->body = remove_empty_lambdas (lambda->body);
-	lambda->body = remove_single_element_lists (lambda->body);
+	LLambda *new = l_mempool_alloc (pool, sizeof (LLambda));
+	
+	ReplaceList *new_repl = calloc (sizeof (ReplaceList), 1);
+	new_repl->old = lambda;
+	new_repl->new = new;
+	new_repl->next = repl;
+
+	new->args = copy_list (pool, lambda->args, new_repl);
+	new->body = copy_tree (pool, lambda->body, new_repl);
+
+	free (new_repl);
+	return new;
 }
 
 static void
-subst_assignments (LTreeNode *body, LLambda *value, int token_id)
+subst_assignments (LTreeNode *body, LLambda *value, int token_id, LMempool *pool)
 {
 	if (body == NULL)
 		return;
 	
 	if (body->token != NULL && body->token->idx == token_id) {
 		body->token = NULL;
-		body->lambda = value;
+		body->lambda = copy_lambda (pool, value, NULL);
 	} else if (body->lambda != NULL) {
-		subst_assignments (body->lambda->body, value, token_id);
+		subst_assignments (body->lambda->body, value, token_id, pool);
 	}
 
-	subst_assignments (body->right_sibling, value, token_id);
-	subst_assignments (body->first_child, value, token_id);
+	subst_assignments (body->right, value, token_id, pool);
+	subst_assignments (body->left, value, token_id, pool);
 }
 
 void
@@ -137,8 +128,6 @@ l_substitute_assignments (LLambda *lambda, LContext *ctx)
 	LAssignment *assign_iter;
 
 	for (assign_iter = ctx->global_assignments; assign_iter; assign_iter = assign_iter->next) {
-		subst_assignments (lambda->body, assign_iter->rhs, assign_iter->lhs->idx);
+		subst_assignments (lambda->body, assign_iter->rhs, assign_iter->lhs->idx, ctx->mempool);
 	}
 }
-
-#endif // #if 0

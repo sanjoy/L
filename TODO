@@ -1,4 +1,5 @@
 TODO:
 
  * Make params const wherever possible
-
+ * Make non-eval possible. Right now, do this by having A = B not
+   evaluate B then and there
