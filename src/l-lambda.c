@@ -1,25 +1,23 @@
 #include "l-lambda.h"
 #include "l-structures.h"
 
-#if 0
-
 static void
 replace_nonfree (LTreeNode *node, LLambda *parent, int param_idx, int token_idx)
 {
-	if (node->lambda != NULL) {
-		replace_nonfree (node->lambda->body, parent, param_idx, token_idx);
-	} else if (node->token != NULL && node->token->parent_lambda == NULL && node->token->idx == token_idx) {
-		node->token->parent_lambda = parent;
-		node->token->non_free_idx = param_idx;
+	if (node != NULL) {
+		if (node->lambda != NULL) {
+			replace_nonfree (node->lambda->body, parent, param_idx, token_idx);
+		} else if (node->token != NULL && node->token->parent == NULL && node->token->idx == token_idx) {
+			node->token->parent = parent;
+			node->token->non_free_idx = param_idx;
+		}
+		replace_nonfree (node->left, parent, param_idx, token_idx);
+		replace_nonfree (node->right, parent, param_idx, token_idx);
 	}
-	if (node->first_child != NULL)
-		replace_nonfree (node->first_child, parent, param_idx, token_idx);
-	if (node->right_sibling != NULL)
-		replace_nonfree (node->right_sibling, parent, param_idx, token_idx);
 }
 
 void
-l_adjust_free_variables (LLambda *lambda)
+l_adjust_bound_variables (LLambda *lambda)
 {
 	LListNode *param_iter;
 	int param_idx;
@@ -29,6 +27,8 @@ l_adjust_free_variables (LLambda *lambda)
 		replace_nonfree (lambda->body, lambda, param_idx, param_iter->token->idx);
 	}
 }
+
+#if 0
 
 static void
 replace_in_body (LTreeNode *node, LLambda *parent, int param_idx, LTreeNode *value)

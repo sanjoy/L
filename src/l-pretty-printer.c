@@ -48,6 +48,8 @@ void
 l_pretty_print_lambda (LPrettyPrinter *pprinter, LLambda *lambda)
 {
 	fprintf (pprinter->out, "L ");
+	if (pprinter->debug)
+		fprintf (pprinter->out, "{%p} ", lambda);
 	l_pretty_print_list (pprinter, lambda->args);
 	fprintf (pprinter->out, " . ");
 	l_pretty_print_tree (pprinter, lambda->body);
@@ -73,7 +75,7 @@ print_tree_full (LPrettyPrinter *pprinter, LTreeNode *node)
 		fprintf (pprinter->out, ")");
 	}
 	
-	print_paren = (node->right != NULL && (L_TREE_NODE_IS_APPLICATION (node->right) || node->right->lambda != NULL));
+	print_paren = (node->right != NULL && L_TREE_NODE_IS_APPLICATION (node->right));
 
 	if (print_paren)
 		fprintf (pprinter->out, "(");
@@ -106,9 +108,7 @@ l_pretty_print_list (LPrettyPrinter *pprinter, LListNode *list)
 void
 l_pretty_print_assignment (LPrettyPrinter *pprinter, LAssignment *assign)
 {
-	fprintf (pprinter->out, "%s <- ", assign->lhs->name);
+	fprintf (pprinter->out, "%s = ", assign->lhs->name);
 
 	l_pretty_print_lambda (pprinter, assign->rhs);
-
-	fprintf (pprinter->out, "\n");
 }
