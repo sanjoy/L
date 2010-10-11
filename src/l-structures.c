@@ -65,7 +65,7 @@ l_list_cons (LMempool *pool, LToken *token, LListNode *list, void *context)
 
 	for (iter = list; iter; iter = iter->next) {
 		if (iter->token->idx == token->idx) {
-			CALL_ERROR_HANDLER (ctx, "Duplicate argument in lambda paramenters.");
+			L_CALL_ERROR_HANDLER (ctx, "Duplicate argument in lambda paramenters.");
 			return NULL;
 		}
 	}
@@ -83,7 +83,7 @@ l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body, void *context)
 	LContext *ctx = context;
 	
 	if (body == NULL) {
-		CALL_ERROR_HANDLER (ctx, "Lambdas with empty bodies not allowed.");
+		L_CALL_ERROR_HANDLER (ctx, "Lambdas with empty bodies not allowed.");
 	}
 
 	new->args = args;
@@ -130,7 +130,7 @@ l_register_global_node (LMempool *pool, LNodeType type, void *data, void *contex
 		LLambda *new = data;
 		new->next = ctx->global_lambdas;
 		ctx->global_lambdas = new;
-		CALL_GLOBAL_NOTIFIER (ctx, NODE_LAMBDA, new);
+		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_LAMBDA, new);
 	} else if (type == NODE_ASSIGNMENT) {
 		LAssignment *new = data, *iter;
 		for (iter = ctx->global_assignments; iter; iter = iter->next) {
@@ -143,6 +143,6 @@ l_register_global_node (LMempool *pool, LNodeType type, void *data, void *contex
 			new->next = ctx->global_assignments;
 			ctx->global_assignments = new;
 		}
-		CALL_GLOBAL_NOTIFIER (ctx, NODE_ASSIGNMENT, new);
+		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_ASSIGNMENT, new);
 	}
 }

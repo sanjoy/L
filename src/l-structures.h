@@ -51,6 +51,10 @@ typedef enum {
 	NODE_LAMBDA
 } LNodeType;
 
+/*
+ * Various functions called by the parser to construct the AST.
+ */
+
 LToken *l_token_new (LTokenHashtable *, LMempool *, char *);
 
 LTreeNode *l_tree_cons_tree_tree (LMempool *, LTreeNode *, LTreeNode *);

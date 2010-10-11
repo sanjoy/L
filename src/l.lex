@@ -71,7 +71,7 @@ l_wrap (yyscan_t scanner)
 void
 l_error (YYLTYPE *loc, LContext *context, const char* err)
 {
-	CALL_ERROR_HANDLER (context, err);
+	L_CALL_ERROR_HANDLER (context, err);
 }
 
 int

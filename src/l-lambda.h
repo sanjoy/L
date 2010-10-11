@@ -4,9 +4,16 @@
 #include "l-structures.h"
 #include "l-context.h"
 
+/*
+ * Adjusts the parent pointer of the tokens to point to
+ * the correct LLambda.
+ */
 void l_adjust_bound_variables (LLambda *);
-void l_normal_order_reduction (LLambda *);
-void l_apply (LLambda *, LTreeNode *);
+
+/*
+ * Substitutes the previously made assignments to the correct
+ * tokens.
+ */
 void l_substitute_assignments (LLambda *, LContext *);
 
 #endif /* __L__LAMBDA__H */

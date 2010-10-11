@@ -9,7 +9,8 @@ replace_nonfree (LTreeNode *node, LLambda *parent, int param_idx, int token_idx)
 	if (node != NULL) {
 		if (node->lambda != NULL) {
 			replace_nonfree (node->lambda->body, parent, param_idx, token_idx);
-		} else if (node->token != NULL && node->token->parent == NULL && node->token->idx == token_idx) {
+		} else if (node->token != NULL && node->token->parent == NULL &&
+		           node->token->idx == token_idx) {
 			node->token->parent = parent;
 			node->token->non_free_idx = param_idx;
 		}
@@ -24,7 +25,9 @@ l_adjust_bound_variables (LLambda *lambda)
 	LListNode *param_iter;
 	int param_idx;
 
-	for (param_iter = lambda->args, param_idx = 0; param_iter; param_iter = param_iter->next, param_idx++) {
+	for (param_iter = lambda->args, param_idx = 0;
+	     param_iter;
+	     param_iter = param_iter->next, param_idx++) {
 		param_iter->token->non_free_idx = param_idx;
 		replace_nonfree (lambda->body, lambda, param_idx, param_iter->token->idx);
 	}
@@ -39,7 +42,8 @@ typedef struct _ReplaceList ReplaceList;
 
 static LLambda *copy_lambda (LMempool *, LLambda *, ReplaceList *);
 
-#define copy_lambda_null(pool, x, repl) (((x) == NULL)?NULL:copy_lambda ((pool), (x), (repl)))
+#define copy_lambda_null(pool, x, repl) \
+	(((x) == NULL) ? NULL : copy_lambda ((pool), (x), (repl)))
 
 static LToken *
 copy_token (LMempool *pool, LToken *token, ReplaceList *repl)
@@ -59,7 +63,8 @@ copy_token (LMempool *pool, LToken *token, ReplaceList *repl)
 	return new;
 }
 
-#define copy_token_null(pool, x, repl) (((x) == NULL)?NULL:copy_token ((pool), (x), (repl)))
+#define copy_token_null(pool, x, repl) \
+	(((x) == NULL) ? NULL : copy_token ((pool), (x), (repl)))
 
 static LTreeNode *
 copy_tree (LMempool *pool, LTreeNode *node, ReplaceList *repl)
@@ -110,7 +115,8 @@ copy_lambda (LMempool *pool, LLambda *lambda, ReplaceList *repl)
 typedef int (*ReplaceTokenPredicate) (LToken *, void *);
 
 static LTreeNode *
-substitute (LTreeNode *body, LTreeNode *value, ReplaceTokenPredicate predicate, void *user_data, LMempool *pool)
+substitute (LTreeNode *body, LTreeNode *value, ReplaceTokenPredicate predicate,
+            void *user_data, LMempool *pool)
 {
 	if (body == NULL)
 		return NULL;
@@ -140,7 +146,7 @@ l_substitute_assignments (LLambda *lambda, LContext *ctx)
 	LAssignment *assign_iter;
 
 	for (assign_iter = ctx->global_assignments; assign_iter; assign_iter = assign_iter->next) {
-		printf ("Substituting for %s\n", assign_iter->lhs->name);
-		lambda->body = substitute (lambda->body, assign_iter->rhs, replace_by_token_id_predicate, &assign_iter->lhs->idx, ctx->mempool);
+		lambda->body = substitute (lambda->body, assign_iter->rhs, replace_by_token_id_predicate,
+		                           &assign_iter->lhs->idx, ctx->mempool);
 	}
 }

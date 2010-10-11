@@ -3,6 +3,11 @@
 
 #include "l-structures.h"
 
+/* Create a new LTokenHashtable from the memory pool
+ * and the hash length (preferably a prime number).
+ * Note that the LMempool is permamently stored in the LTokenHashtable
+ * structure.
+ */
 LTokenHashtable *l_token_hashtable_new (LMempool *, int);
 
 LToken *l_token_hashtable_hash (LTokenHashtable *, char *);
