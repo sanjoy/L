@@ -77,10 +77,10 @@ l_list_cons (LMempool *pool, LToken *token, LListNode *list, void *context)
 }
 
 LLambda *
-l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body, void *context)
+l_lambda_new (void *context, LListNode *args, LTreeNode *body)
 {
-	LLambda *new = l_mempool_alloc (pool, sizeof (LLambda));
 	LContext *ctx = context;
+	LLambda *new = l_mempool_alloc (ctx->mempool, sizeof (LLambda));
 	
 	if (body == NULL) {
 		L_CALL_ERROR_HANDLER (ctx, "Lambdas with empty bodies not allowed.");
@@ -89,42 +89,40 @@ l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body, void *context)
 	new->args = args;
 	new->body = body;
 
-	l_substitute_assignments (new, ctx);
-	l_adjust_bound_variables (new);
-	//	l_normal_order_reduction (new);
-
-	/*
-	 * Do something more intelligent in the (L () (L (...) (...))) case.
-	 */
-	//	if (new->body->lambda != NULL && new->body->right_sibling == NULL && new->args == NULL)
-	//		return new->body->lambda;
-	
 	return new;
 }
 
 LAssignment *
-l_assignment_new_tree (LMempool *pool, LToken *lhs, LTreeNode *rhs)
+l_assignment_new_tree (void *context, LToken *lhs, LTreeNode *rhs)
 {
-	LAssignment *new = l_mempool_alloc (pool, sizeof (LAssignment));
+	LContext *ctx = context;
+	LAssignment *new = l_mempool_alloc (ctx->mempool, sizeof (LAssignment));
 	new->lhs = lhs;
-	new->rhs = rhs;
+	new->rhs = l_substitute_assignments (rhs, ctx);
 	return new;
 }
 
 LAssignment *
-l_assignment_new_lambda (LMempool *pool, LToken *lhs, LLambda *rhs)
+l_assignment_new_lambda (void *context, LToken *lhs, LLambda *rhs)
 {
-	LTreeNode *node = l_mempool_alloc (pool, sizeof (LTreeNode));
-	node->lambda = rhs;
-	return l_assignment_new_tree (pool, lhs, node);
+	LContext *ctx = context;
+	LAssignment *new = l_mempool_alloc (ctx->mempool, sizeof (LAssignment));
+
+	rhs->body = l_substitute_assignments (rhs->body, ctx);
+	l_adjust_bound_variables (rhs);
+
+	new->rhs = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
+	new->rhs->lambda = rhs;
+	new->lhs = lhs;
+	return new;
 }
 
 void
-l_register_global_node (LMempool *pool, LNodeType type, void *data, void *context)
+l_global_node_new (void *context, LGlobalNodeType type, void *data)
 {
 	LContext *ctx = context;
 
-	assert (type == NODE_LAMBDA || type == NODE_ASSIGNMENT);
+	assert (type == NODE_LAMBDA || type == NODE_ASSIGNMENT || type == NODE_EXPRESSION);
 
 	if (type == NODE_LAMBDA) {
 		LLambda *new = data;
@@ -144,5 +142,8 @@ l_register_global_node (LMempool *pool, LNodeType type, void *data, void *contex
 			ctx->global_assignments = new;
 		}
 		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_ASSIGNMENT, new);
+	} else if (type == NODE_EXPRESSION) {
+		ctx->last_expression = l_substitute_assignments (data, ctx);
+		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_EXPRESSION, ctx->last_expression);
 	}
 }

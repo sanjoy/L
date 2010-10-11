@@ -140,13 +140,14 @@ replace_by_token_id_predicate (LToken *token, void *user_data)
 	return token->idx == token_id;
 }
 
-void
-l_substitute_assignments (LLambda *lambda, LContext *ctx)
+LTreeNode *
+l_substitute_assignments (LTreeNode *node, LContext *ctx)
 {
 	LAssignment *assign_iter;
 
 	for (assign_iter = ctx->global_assignments; assign_iter; assign_iter = assign_iter->next) {
-		lambda->body = substitute (lambda->body, assign_iter->rhs, replace_by_token_id_predicate,
-		                           &assign_iter->lhs->idx, ctx->mempool);
+		node = substitute (node, assign_iter->rhs, replace_by_token_id_predicate,
+		                   &assign_iter->lhs->idx, ctx->mempool);
 	}
+	return node;
 }

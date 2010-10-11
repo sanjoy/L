@@ -14,6 +14,6 @@ void l_adjust_bound_variables (LLambda *);
  * Substitutes the previously made assignments to the correct
  * tokens.
  */
-void l_substitute_assignments (LLambda *, LContext *);
+LTreeNode *l_substitute_assignments (LTreeNode *, LContext *);
 
 #endif /* __L__LAMBDA__H */

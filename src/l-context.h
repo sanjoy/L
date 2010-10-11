@@ -13,7 +13,7 @@ typedef void (*LParsingErrorFunc) (void *, const char *);
  * The global notifier is invoked whenever a new lambda or a new
  * assignment is completely read.
  */
-typedef void (*LGlobalNotifier) (void *, LNodeType, void *);
+typedef void (*LGlobalNotifier) (void *, LGlobalNodeType, void *);
 
 /*
  * Hosts one computation environment.
@@ -30,6 +30,9 @@ typedef struct {
 	/* The lambdas and assignments declared at global scope. */
 	LLambda *global_lambdas;
 	LAssignment *global_assignments;
+
+	/* The last expression evaluated in the REPL. */
+	LTreeNode *last_expression;
 
 	/* Only one of the following fields may be non NULL, and that
 	 * field shall be used as the input.

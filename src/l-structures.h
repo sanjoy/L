@@ -48,8 +48,9 @@ typedef struct _LAssignment LAssignment;
 
 typedef enum {
 	NODE_ASSIGNMENT,
-	NODE_LAMBDA
-} LNodeType;
+	NODE_LAMBDA,
+	NODE_EXPRESSION
+} LGlobalNodeType;
 
 /*
  * Various functions called by the parser to construct the AST.
@@ -63,10 +64,10 @@ LTreeNode *l_tree_cons_tree_lambda (LMempool *, LTreeNode *, LLambda *);
 
 LListNode *l_list_cons (LMempool *, LToken *, LListNode *, void *);
 
-LLambda *l_lambda_new (LMempool *, LListNode *, LTreeNode *, void *);
-LAssignment *l_assignment_new_tree (LMempool *, LToken *, LTreeNode *);
-LAssignment *l_assignment_new_lambda (LMempool *, LToken *, LLambda *);
+LLambda *l_lambda_new (void *, LListNode *, LTreeNode *);
+LAssignment *l_assignment_new_tree (void *, LToken *, LTreeNode *);
+LAssignment *l_assignment_new_lambda (void *, LToken *, LLambda *);
 
-void l_register_global_node (LMempool *, LNodeType, void *, void *);
+void l_global_node_new (void *, LGlobalNodeType, void *);
 
 #endif /* __STRUCTURES__H */
