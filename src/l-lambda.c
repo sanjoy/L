@@ -39,6 +39,8 @@ typedef struct _ReplaceList ReplaceList;
 
 static LLambda *copy_lambda (LMempool *, LLambda *, ReplaceList *);
 
+#define copy_lambda_null(pool, x, repl) (((x) == NULL)?NULL:copy_lambda ((pool), (x), (repl)))
+
 static LToken *
 copy_token (LMempool *pool, LToken *token, ReplaceList *repl)
 {
@@ -57,19 +59,19 @@ copy_token (LMempool *pool, LToken *token, ReplaceList *repl)
 	return new;
 }
 
+#define copy_token_null(pool, x, repl) (((x) == NULL)?NULL:copy_token ((pool), (x), (repl)))
+
 static LTreeNode *
 copy_tree (LMempool *pool, LTreeNode *node, ReplaceList *repl)
 {
 	LTreeNode *new;
 	
 	if (node == NULL)
-
 		return NULL;
+	
 	new = l_mempool_alloc (pool, sizeof (LTreeNode));
-	if (node->token != NULL)
-		new->token = copy_token (pool, node->token, repl);
-	if (node->lambda != NULL)
-		new->lambda = copy_lambda (pool, node->lambda, repl);
+	new->token = copy_token_null (pool, node->token, repl);
+	new->lambda = copy_lambda_null (pool, node->lambda, repl);
 	new->left = copy_tree (pool, node->left, repl);
 	new->right = copy_tree (pool, node->right, repl);
 
@@ -105,21 +107,31 @@ copy_lambda (LMempool *pool, LLambda *lambda, ReplaceList *repl)
 	return new;
 }
 
-static void
-subst_assignments (LTreeNode *body, LLambda *value, int token_id, LMempool *pool)
+typedef int (*ReplaceTokenPredicate) (LToken *, void *);
+
+static LTreeNode *
+substitute (LTreeNode *body, LTreeNode *value, ReplaceTokenPredicate predicate, void *user_data, LMempool *pool)
 {
 	if (body == NULL)
-		return;
+		return NULL;
 	
-	if (body->token != NULL && body->token->idx == token_id) {
-		body->token = NULL;
-		body->lambda = copy_lambda (pool, value, NULL);
+	if (body->token != NULL && predicate (body->token, user_data)) {
+		return copy_tree (pool, value, NULL);
 	} else if (body->lambda != NULL) {
-		subst_assignments (body->lambda->body, value, token_id, pool);
+		body->lambda->body = substitute (body->lambda->body, value, predicate, user_data, pool);
 	}
 
-	subst_assignments (body->right, value, token_id, pool);
-	subst_assignments (body->left, value, token_id, pool);
+	body->right = substitute (body->right, value, predicate, user_data, pool);
+	body->left = substitute (body->left, value, predicate, user_data, pool);
+
+	return body;
+}
+
+static int
+replace_by_token_id_predicate (LToken *token, void *user_data)
+{
+	int token_id = *((int *) user_data);
+	return token->idx == token_id;
 }
 
 void
@@ -128,6 +140,7 @@ l_substitute_assignments (LLambda *lambda, LContext *ctx)
 	LAssignment *assign_iter;
 
 	for (assign_iter = ctx->global_assignments; assign_iter; assign_iter = assign_iter->next) {
-		subst_assignments (lambda->body, assign_iter->rhs, assign_iter->lhs->idx, ctx->mempool);
+		printf ("Substituting for %s\n", assign_iter->lhs->name);
+		lambda->body = substitute (lambda->body, assign_iter->rhs, replace_by_token_id_predicate, &assign_iter->lhs->idx, ctx->mempool);
 	}
 }

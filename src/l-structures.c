@@ -103,12 +103,20 @@ l_lambda_new (LMempool *pool, LListNode *args, LTreeNode *body, void *context)
 }
 
 LAssignment *
-l_assignment_new (LMempool *pool, LToken *tok, LLambda *lam)
+l_assignment_new_tree (LMempool *pool, LToken *lhs, LTreeNode *rhs)
 {
 	LAssignment *new = l_mempool_alloc (pool, sizeof (LAssignment));
-	new->lhs = tok;
-	new->rhs = lam;
+	new->lhs = lhs;
+	new->rhs = rhs;
 	return new;
+}
+
+LAssignment *
+l_assignment_new_lambda (LMempool *pool, LToken *lhs, LLambda *rhs)
+{
+	LTreeNode *node = l_mempool_alloc (pool, sizeof (LTreeNode));
+	node->lambda = rhs;
+	return l_assignment_new_tree (pool, lhs, node);
 }
 
 void
@@ -124,10 +132,17 @@ l_register_global_node (LMempool *pool, LNodeType type, void *data, void *contex
 		ctx->global_lambdas = new;
 		CALL_GLOBAL_NOTIFIER (ctx, NODE_LAMBDA, new);
 	} else if (type == NODE_ASSIGNMENT) {
-		LAssignment *new = data;
-		new->next = ctx->global_assignments;
-		ctx->global_assignments = new;
+		LAssignment *new = data, *iter;
+		for (iter = ctx->global_assignments; iter; iter = iter->next) {
+			if (iter->lhs->idx == new->lhs->idx) {
+				iter->lhs = new->lhs;
+				iter->rhs = new->rhs;
+			}
+		}
+		if (iter == NULL) {
+			new->next = ctx->global_assignments;
+			ctx->global_assignments = new;
+		}
 		CALL_GLOBAL_NOTIFIER (ctx, NODE_ASSIGNMENT, new);
 	}
 }
-

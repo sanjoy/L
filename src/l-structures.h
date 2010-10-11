@@ -40,7 +40,7 @@ struct _LLambda {
 
 struct _LAssignment {
 	LToken *lhs;
-	LLambda *rhs;
+	LTreeNode *rhs;
 	struct _LAssignment *next;
 };
 
@@ -60,7 +60,8 @@ LTreeNode *l_tree_cons_tree_lambda (LMempool *, LTreeNode *, LLambda *);
 LListNode *l_list_cons (LMempool *, LToken *, LListNode *, void *);
 
 LLambda *l_lambda_new (LMempool *, LListNode *, LTreeNode *, void *);
-LAssignment *l_assignment_new (LMempool *, LToken *, LLambda *);
+LAssignment *l_assignment_new_tree (LMempool *, LToken *, LTreeNode *);
+LAssignment *l_assignment_new_lambda (LMempool *, LToken *, LLambda *);
 
 void l_register_global_node (LMempool *, LNodeType, void *, void *);
 

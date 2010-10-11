@@ -67,8 +67,9 @@ lambda:
        ;
 
 assignment:
-            IDENTIFIER '=' lambda { $$ = l_assignment_new (context->mempool, $1, $3); }
-          ;
+            IDENTIFIER '=' tree   { $$ = l_assignment_new_tree (context->mempool, $1, $3); }
+         |  IDENTIFIER '=' lambda { $$ = l_assignment_new_lambda (context->mempool, $1, $3); }
+         ;
 
 %%
 
