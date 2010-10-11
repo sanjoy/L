@@ -2,6 +2,7 @@
 #include "l-structures.h"
 
 #include <stdlib.h>
+#include <assert.h>
 
 static void
 replace_nonfree (LTreeNode *node, LLambda *parent, int param_idx, int token_idx)
@@ -141,7 +142,7 @@ replace_by_token_id_predicate (LToken *token, void *user_data)
 }
 
 LTreeNode *
-l_substitute_assignments (LTreeNode *node, LContext *ctx)
+l_substitute_assignments (LContext *ctx, LTreeNode *node)
 {
 	LAssignment *assign_iter;
 
@@ -150,4 +151,79 @@ l_substitute_assignments (LTreeNode *node, LContext *ctx)
 		                   &assign_iter->lhs->idx, ctx->mempool);
 	}
 	return node;
+}
+
+typedef struct {
+	int param_idx;
+	LLambda *parent;
+} ReplaceByParamArgs;
+
+static int
+replace_by_param_id_predicate (LToken *token, void *user_data)
+{
+	ReplaceByParamArgs *args = user_data;
+	return (args->parent == token->parent && args->param_idx == token->non_free_idx);
+}
+
+static LLambda *
+apply (LLambda *lambda, LTreeNode *arg, LMempool *pool)
+{
+	ReplaceByParamArgs rbpa;
+	assert (lambda->args);
+	rbpa.param_idx = lambda->args->token->non_free_idx;
+	rbpa.parent = lambda;
+	lambda->body = substitute (lambda->body, arg, replace_by_param_id_predicate,
+	                           &rbpa, pool);
+	lambda->args = lambda->args->next;
+	return lambda;
+}
+
+static LTreeNode *
+remove_empty_lambdas (LTreeNode *node)
+{
+	if (node == NULL)
+		return NULL;
+	if (node->lambda != NULL) {
+		if (node->lambda->args == NULL) {
+			return node->lambda->body;
+		} else
+			return node;
+	}
+	node->left = remove_empty_lambdas (node->left);
+	node->right = remove_empty_lambdas (node->right);
+	
+	return node;
+}
+
+LTreeNode *
+l_normal_order_reduction (LContext *ctx, LTreeNode *node)
+{
+	if (node == NULL)
+		return node;
+	node = remove_empty_lambdas (node);
+	
+	node->left = l_normal_order_reduction (ctx, node->left);
+	node->right = l_normal_order_reduction (ctx, node->right);
+
+	if (L_TREE_NODE_IS_APPLICATION (node)) {
+		assert (node->left != NULL);
+		if (node->left->lambda != NULL) {
+			LLambda *ans = apply (node->left->lambda, node->right, ctx->mempool);
+			ans->body->left = l_normal_order_reduction (ctx, ans->body->left);
+			ans->body->right = l_normal_order_reduction (ctx, ans->body->right);
+			if (ans->args == NULL) {
+				return ans->body;
+			} else {
+				LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
+				node->lambda = ans;
+				return node;
+			}
+		} else {
+			return node;
+		}
+	} else if (node->token != NULL) {
+		return node;
+	} else {
+		return node;
+	}
 }

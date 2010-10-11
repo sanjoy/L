@@ -98,7 +98,7 @@ l_assignment_new_tree (void *context, LToken *lhs, LTreeNode *rhs)
 	LContext *ctx = context;
 	LAssignment *new = l_mempool_alloc (ctx->mempool, sizeof (LAssignment));
 	new->lhs = lhs;
-	new->rhs = l_substitute_assignments (rhs, ctx);
+	new->rhs = l_substitute_and_reduce (ctx, rhs);
 	return new;
 }
 
@@ -106,15 +106,13 @@ LAssignment *
 l_assignment_new_lambda (void *context, LToken *lhs, LLambda *rhs)
 {
 	LContext *ctx = context;
-	LAssignment *new = l_mempool_alloc (ctx->mempool, sizeof (LAssignment));
+	LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
 
-	rhs->body = l_substitute_assignments (rhs->body, ctx);
+	rhs->body = l_substitute_assignments (ctx, rhs->body);
 	l_adjust_bound_variables (rhs);
+	node->lambda = rhs;
 
-	new->rhs = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
-	new->rhs->lambda = rhs;
-	new->lhs = lhs;
-	return new;
+	return l_assignment_new_tree (context, lhs, node);
 }
 
 void
@@ -124,9 +122,10 @@ l_global_node_new (void *context, LGlobalNodeType type, void *data)
 
 	assert (type == NODE_LAMBDA || type == NODE_ASSIGNMENT || type == NODE_EXPRESSION);
 
-	if (type == NODE_LAMBDA) {
+	if (type == NODE_LAMBDA && ((LLambda *) data)->args != NULL) {
 		LLambda *new = data;
 		new->next = ctx->global_lambdas;
+		new->body = l_substitute_and_reduce (ctx, new->body);
 		ctx->global_lambdas = new;
 		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_LAMBDA, new);
 	} else if (type == NODE_ASSIGNMENT) {
@@ -142,8 +141,11 @@ l_global_node_new (void *context, LGlobalNodeType type, void *data)
 			ctx->global_assignments = new;
 		}
 		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_ASSIGNMENT, new);
-	} else if (type == NODE_EXPRESSION) {
-		ctx->last_expression = l_substitute_assignments (data, ctx);
+	} else if (type == NODE_EXPRESSION || (type == NODE_LAMBDA && ((LLambda *) data)->args == NULL)) {
+		if (type == NODE_LAMBDA)
+			ctx->last_expression = l_substitute_and_reduce (ctx, ((LLambda *) data)->body);
+		else
+			ctx->last_expression = l_substitute_and_reduce (ctx, data);
 		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_EXPRESSION, ctx->last_expression);
 	}
 }
