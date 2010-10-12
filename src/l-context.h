@@ -57,7 +57,7 @@ typedef struct {
 
 	void *newline_callback_data;
 	LNewlineCallback newline_callback;
-	int newlines_count;
+	int chars_since_last_global, to_print_newline;
 
 	LSwitchFileCallback switch_file_callback;
 	void *switch_file_callback_data;
@@ -86,8 +86,7 @@ typedef struct {
 #define L_CALL_NEWLINE_CALLBACK(ctx) do {	  \
 		if ((ctx)->newline_callback) \
 			(ctx)->newline_callback ((ctx)->newline_callback_data,\
-			                         (ctx)->newlines_count); \
-		(ctx)->newlines_count++; \
+			                         (ctx)->chars_since_last_global); \
 	} while (0)
 
 /*

@@ -126,7 +126,7 @@ l_global_node_new (void *context, LGlobalNodeType type, void *data)
 	assert (type == NODE_LAMBDA || type == NODE_ASSIGNMENT ||
 	        type == NODE_EXPRESSION || type == NODE_IDENTIFIER);
 
-	ctx->newlines_count = 0;
+	ctx->chars_since_last_global = 0;
 
 	if (type == NODE_LAMBDA && ((LLambda *) data)->args != NULL) {
 		LLambda *new = data;

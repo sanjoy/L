@@ -82,20 +82,17 @@ assignment:
 LContext *
 l_context_new_from_file (FILE *file)
 {
-	LContext *context = malloc (sizeof (LContext));
-	context->input_string = NULL;
+	LContext *context = calloc (sizeof (LContext), 1);
 	context->mempool = l_mempool_new ();
 	context->input_file = file;
 	context->hash_table = l_token_hashtable_new (context->mempool, 97);
-	context->global_notifier = NULL;
-	context->newlines_count = 0;
 	return context;
 }
 
 LContext *
 l_context_new_from_string (char *str, size_t len)
 {
-	LContext *context = malloc (sizeof (LContext));
+	LContext *context = calloc (sizeof (LContext), 1);
 	size_t i = 0;
 	
 	context->mempool = l_mempool_new ();
@@ -106,7 +103,5 @@ l_context_new_from_string (char *str, size_t len)
 	while (i < len && *str != '\0')
 		context->input_string [i++] = *str++;
 	context->input_string [i] = '\0';
-	context->global_notifier = NULL;
-	context->newlines_count = 0;
 	return context;
 }

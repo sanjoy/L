@@ -50,14 +50,14 @@ print_function (void *user_data, LGlobalNodeType node_type, void *data)
 }
 
 static void
-newline_callback (void *data, int newlines_count)
+newline_callback (void *data, int chars_since_last_global)
 {
 	ReplInfo *info = data;
 
 	if (info->currently_reading_file)
 		return;
 
-	if (newlines_count == 0)
+	if (chars_since_last_global == 0)
 		printf (" L > ");
 	else
 		printf (" ... ");
@@ -74,7 +74,7 @@ switch_file_callback (void *data)
 		fclose (ctx->input_file);
 		ctx->input_file = stdin;
 		info->currently_reading_file = 0;
-		ctx->newlines_count = 0;
+		ctx->chars_since_last_global = 0;
 		L_CALL_NEWLINE_CALLBACK (ctx);
 		return 1;
 	}

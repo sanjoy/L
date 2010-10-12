@@ -19,7 +19,12 @@
                 result = 1; \
             } \
         } else { \
-			int ret = fgetc (yyextra->input_file); \
+			int ret;						 \
+			if (yyextra->to_print_newline) { \
+				L_CALL_NEWLINE_CALLBACK (yyextra); \
+				yyextra->to_print_newline = 0; \
+			} \
+			ret = fgetc (yyextra->input_file); \
 			if (ret == -1) { \
 				if (yyextra->switch_file_callback != NULL) { \
 					if (yyextra->switch_file_callback (yyextra->switch_file_callback_data)) { \
@@ -34,9 +39,11 @@
 			} else {\
 				buf [0] = ret; \
 				result = 1; \
+				if (buf [0] != '\n') \
+					yyextra->chars_since_last_global++; \
 			} \
-	        if (result == 1 && buf [0] == '\n') \
-				L_CALL_NEWLINE_CALLBACK (yyextra); \
+			if (result == 1 && buf [0] == '\n')	\
+				yyextra->to_print_newline = 1; \
         } \
 	} while (0)
 
@@ -89,7 +96,6 @@ int
 l_parse_using_context (LContext *context)
 {
 	L_CALL_NEWLINE_CALLBACK (context);
-	context->newlines_count = 0;
 	l_lex_init_extra (context, &(context->scanner_data));
 	return l_parse (context);
 }
