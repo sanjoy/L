@@ -22,7 +22,6 @@ void l_error (YYLTYPE *, LContext *, const char *);
 
 %token IDENTIFIER "identifier"
 %token TOKEN      "token"
-%token EVAL       "evaluate"
 %token END 0      "end of file"
 
 %union {
@@ -88,7 +87,7 @@ l_context_new_from_file (FILE *file)
 	context->input_file = file;
 	context->hash_table = l_token_hashtable_new (context->mempool, 97);
 	context->global_notifier = NULL;
-	context->complete_flag = 1;
+	context->newlines_count = 0;
 	return context;
 }
 
@@ -107,6 +106,6 @@ l_context_new_from_string (char *str, size_t len)
 		context->input_string [i++] = *str++;
 	context->input_string [i] = '\0';
 	context->global_notifier = NULL;
-	context->complete_flag = 1;
+	context->newlines_count = 0;
 	return context;
 }

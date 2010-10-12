@@ -9,26 +9,35 @@
 
 #define YY_USER_ACTION yylloc->first_line = yylineno;
 
-#define YY_INPUT(buf, result, max_size) do {           \
-		char c;                                        \
-        if (yyextra->input_string) {                   \
-            if (*(yyextra->input_string) == '\0')      \
-                result = YY_NULL;                      \
-            else {                                     \
-                buf [0] = *(yyextra->input_string++);  \
-                result = 1;                            \
-            }                                          \
-        } else {                                       \
-	        assert (yyextra->input_file);              \
-	        if (feof (yyextra->input_file))            \
-		        result = YY_NULL;                      \
-	        else {                                     \
-		        buf [0] = fgetc (yyextra->input_file); \
-		        if (buf [0] == '\n')                   \
-                     L_CALL_NEWLINE_CALLBACK (yyextra);\
-		        result = 1;                            \
-	        }                                          \
-        }	                                           \
+#define YY_INPUT(buf, result, max_size) do { \
+		char c; \
+        if (yyextra->input_string) { \
+            if (*(yyextra->input_string) == '\0') {\
+                result = YY_NULL; \
+            } else { \
+                buf [0] = *(yyextra->input_string++); \
+                result = 1; \
+            } \
+        } else { \
+			int ret = fgetc (yyextra->input_file); \
+			if (ret == -1) { \
+				if (yyextra->switch_file_callback != NULL) { \
+					if (yyextra->switch_file_callback (yyextra->switch_file_callback_data)) { \
+						buf [0] = fgetc (yyextra->input_file); \
+						result = 1; \
+					} else { \
+						result = YY_NULL; \
+					} \
+				} else { \
+					result == YY_NULL; \
+				} \
+			} else {\
+				buf [0] = ret; \
+				result = 1; \
+			} \
+	        if (result == 1 && buf [0] == '\n') \
+				L_CALL_NEWLINE_CALLBACK (yyextra); \
+        } \
 	} while (0)
 
 #define ECHO
@@ -48,8 +57,6 @@
 
 [()=.L;<-\[\]]                  return *yytext;
 
-"EVAL"                          return EVAL;
-
 :[A-Z][a-zA-Z0-9]*              {
                                      yylval->identifier = l_token_new (yyextra->hash_table, yyextra->mempool, yytext);
                                      return IDENTIFIER;
@@ -60,8 +67,6 @@
                                      return TOKEN;
                                 }
 
-\$[a-zA-Z0-9]+                  L_CALL_SPECIAL_COMMAND_CALLBACK (yyextra, yytext);
-                                
 <<EOF>>                         return END;
 
 %%
@@ -84,6 +89,7 @@ int
 l_parse_using_context (LContext *context)
 {
 	L_CALL_NEWLINE_CALLBACK (context);
+	context->newlines_count = 0;
 	l_lex_init_extra (context, &(context->scanner_data));
 	return l_parse (context);
 }

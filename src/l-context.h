@@ -20,10 +20,9 @@ typedef void (*LGlobalNotifier) (void *, LGlobalNodeType, void *);
  */
 typedef void (*LNewlineCallback) (void *, int complete);
 
-/* This is called whenever a special command (starting with a $) is
- * read.
+/* Called when an EOF is encountered.
  */
-typedef void (*SpecialCommandCallback) (void *, char *);
+typedef int (*LSwitchFileCallback) (void *);
 
 /*
  * Hosts one computation environment.
@@ -58,10 +57,13 @@ typedef struct {
 
 	void *newline_callback_data;
 	LNewlineCallback newline_callback;
-	int complete_flag;
+	int newlines_count;
 
-	SpecialCommandCallback special_command_callback;
-	void *special_command_callback_data;
+	LSwitchFileCallback switch_file_callback;
+	void *switch_file_callback_data;
+
+	/* Used by the REPL. */
+	void *repl_data;
 
 } LContext;
 
@@ -84,15 +86,8 @@ typedef struct {
 #define L_CALL_NEWLINE_CALLBACK(ctx) do {	  \
 		if ((ctx)->newline_callback) \
 			(ctx)->newline_callback ((ctx)->newline_callback_data,\
-			                         (ctx)->complete_flag); \
-		if ((ctx)->complete_flag) \
-			(ctx)->complete_flag = 0; \
-	} while (0)
-
-#define L_CALL_SPECIAL_COMMAND_CALLBACK(ctx, __txt) do {	  \
-		if ((ctx)->special_command_callback) \
-			(ctx)->special_command_callback ((ctx)->special_command_callback_data, \
-			                                 __txt); \
+			                         (ctx)->newlines_count); \
+		(ctx)->newlines_count++; \
 	} while (0)
 
 /*
