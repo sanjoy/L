@@ -103,7 +103,7 @@ l_assignment_new_tree (void *context, LToken *lhs, LTreeNode *rhs, int simplify)
 	if (simplify)
 		new->rhs = l_substitute_and_reduce (ctx, rhs);
 	else
-		new->rhs = l_substitute_assignments (ctx, rhs);
+		new->rhs = rhs;
 	return new;
 }
 

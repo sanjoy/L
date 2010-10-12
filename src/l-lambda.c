@@ -384,6 +384,7 @@ LTreeNode *
 l_normal_order_reduction (LContext *ctx, LTreeNode *node)
 {
 	node = remove_empty_lambdas (node);
+	node = l_substitute_assignments (ctx, node);
 
 	/* First evaluate lazily. */
 	node = normal_order_reduction_inner (ctx, node, 1);
