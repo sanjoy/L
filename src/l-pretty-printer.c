@@ -103,6 +103,5 @@ void
 l_pretty_print_assignment (LPrettyPrinter *pprinter, LAssignment *assign)
 {
 	fprintf (pprinter->out, "%s = ", assign->lhs->name);
-
 	l_pretty_print_tree (pprinter, assign->rhs);
 }

@@ -24,6 +24,8 @@
 		        result = YY_NULL;                      \
 	        else {                                     \
 		        buf [0] = fgetc (yyextra->input_file); \
+		        if (buf [0] == '\n')                   \
+                     L_CALL_NEWLINE_CALLBACK (yyextra);\
 		        result = 1;                            \
 	        }                                          \
         }	                                           \
@@ -79,6 +81,7 @@ l_error (YYLTYPE *loc, LContext *context, const char* err)
 int
 l_parse_using_context (LContext *context)
 {
+	L_CALL_NEWLINE_CALLBACK (context);
 	l_lex_init_extra (context, &(context->scanner_data));
 	return l_parse (context);
 }

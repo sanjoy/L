@@ -123,6 +123,8 @@ l_global_node_new (void *context, LGlobalNodeType type, void *data)
 
 	assert (type == NODE_LAMBDA || type == NODE_ASSIGNMENT || type == NODE_EXPRESSION);
 
+	ctx->complete_flag = 1;
+
 	if (type == NODE_LAMBDA && ((LLambda *) data)->args != NULL) {
 		LLambda *new = data;
 		new->next = ctx->global_lambdas;

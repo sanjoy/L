@@ -15,6 +15,11 @@ typedef void (*LParsingErrorFunc) (void *, const char *);
  */
 typedef void (*LGlobalNotifier) (void *, LGlobalNodeType, void *);
 
+/* This is called back everytime a '\n' is read. complete is true if
+ * an expression was just completed, otherwise it is false.
+ */
+typedef void (*LNewlineCallback) (void *, int complete);
+
 /*
  * Hosts one computation environment.
  */
@@ -46,6 +51,10 @@ typedef struct {
 	void *global_notifier_data;
 	LGlobalNotifier global_notifier ;
 
+	void *newline_callback_data;
+	LNewlineCallback newline_callback;
+	int complete_flag;
+
 } LContext;
 
 /*
@@ -55,12 +64,21 @@ typedef struct {
 
 #define L_CALL_GLOBAL_NOTIFIER(ctx,type,data) do { \
 		if ((ctx)->global_notifier != NULL) \
-			(ctx)->global_notifier ((ctx)->global_notifier_data, type, data); \
+			(ctx)->global_notifier ((ctx)->global_notifier_data,\
+			                        type, data); \
 	} while (0)
 
 #define L_CALL_ERROR_HANDLER(ctx,err) do { \
 		if ((ctx)->error_handler != NULL) \
 			(ctx)->error_handler ((ctx)->error_handler_data, err); \
+	} while (0)
+
+#define L_CALL_NEWLINE_CALLBACK(ctx) do {	  \
+		if ((ctx)->newline_callback) \
+			(ctx)->newline_callback ((ctx)->newline_callback_data,\
+			                         (ctx)->complete_flag); \
+		if ((ctx)->complete_flag) \
+			(ctx)->complete_flag = 0; \
 	} while (0)
 
 /*
