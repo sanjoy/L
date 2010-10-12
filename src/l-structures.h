@@ -9,7 +9,7 @@ typedef struct _LLambda LLambda;
 
 typedef struct {
 	char *name;
-	int idx, non_free_idx;
+	int idx;
 	LLambda *parent;
 } LToken;
 

@@ -1,22 +1,23 @@
 #include "l-lambda.h"
 #include "l-structures.h"
 
+#include "l-pretty-printer.h"
+
 #include <stdlib.h>
 #include <assert.h>
 
 static void
-replace_nonfree (LTreeNode *node, LLambda *parent, int param_idx, int token_idx)
+replace_nonfree (LTreeNode *node, LLambda *parent, int token_idx)
 {
 	if (node != NULL) {
 		if (node->lambda != NULL) {
-			replace_nonfree (node->lambda->body, parent, param_idx, token_idx);
+			replace_nonfree (node->lambda->body, parent, token_idx);
 		} else if (node->token != NULL && node->token->parent == NULL &&
 		           node->token->idx == token_idx) {
 			node->token->parent = parent;
-			node->token->non_free_idx = param_idx;
 		}
-		replace_nonfree (node->left, parent, param_idx, token_idx);
-		replace_nonfree (node->right, parent, param_idx, token_idx);
+		replace_nonfree (node->left, parent, token_idx);
+		replace_nonfree (node->right, parent, token_idx);
 	}
 }
 
@@ -24,14 +25,9 @@ void
 l_adjust_bound_variables (LLambda *lambda)
 {
 	LListNode *param_iter;
-	int param_idx;
 
-	for (param_iter = lambda->args, param_idx = 0;
-	     param_iter;
-	     param_iter = param_iter->next, param_idx++) {
-		param_iter->token->non_free_idx = param_idx;
-		replace_nonfree (lambda->body, lambda, param_idx, param_iter->token->idx);
-	}
+	for (param_iter = lambda->args; param_iter; param_iter = param_iter->next)
+		replace_nonfree (lambda->body, lambda, param_iter->token->idx);
 }
 
 struct _ReplaceList {
@@ -52,7 +48,7 @@ copy_token (LMempool *pool, LToken *token, ReplaceList *repl)
 	LToken *new = l_mempool_alloc (pool, sizeof (LToken));
 	new->name = token->name;
 	new->idx = token->idx;
-	new->non_free_idx = token->idx;
+	new->parent = token->parent;
 
 	if (token->parent != NULL) {
 		ReplaceList *iter;
@@ -125,7 +121,9 @@ substitute (LTreeNode *body, LTreeNode *value, ReplaceTokenPredicate predicate,
 	if (body->token != NULL && predicate (body->token, user_data)) {
 		return copy_tree (pool, value, NULL);
 	} else if (body->lambda != NULL) {
-		body->lambda->body = substitute (body->lambda->body, value, predicate, user_data, pool);
+		body->lambda->body = substitute (body->lambda->body, value, predicate,
+		                                 user_data, pool);
+		l_adjust_bound_variables (body->lambda);
 	}
 
 	body->right = substitute (body->right, value, predicate, user_data, pool);
@@ -146,7 +144,8 @@ l_substitute_assignments (LContext *ctx, LTreeNode *node)
 {
 	LAssignment *assign_iter;
 
-	for (assign_iter = ctx->global_assignments; assign_iter; assign_iter = assign_iter->next) {
+	for (assign_iter = ctx->global_assignments; assign_iter;
+	     assign_iter = assign_iter->next) {
 		node = substitute (node, assign_iter->rhs, replace_by_token_id_predicate,
 		                   &assign_iter->lhs->idx, ctx->mempool);
 	}
@@ -162,18 +161,48 @@ static int
 replace_by_param_id_predicate (LToken *token, void *user_data)
 {
 	ReplaceByParamArgs *args = user_data;
-	return (args->parent == token->parent && args->param_idx == token->non_free_idx);
+	return (args->parent == token->parent && args->param_idx == token->idx);
 }
 
+#ifdef __APPLY__LOG
+
+static LLambda *apply_nodebug (LLambda *, LTreeNode *, LContext *);
+
 static LLambda *
-apply (LLambda *lambda, LTreeNode *arg, LMempool *pool)
+apply (LLambda *lambda, LTreeNode *arg, LContext *ctx)
+{
+	static LPrettyPrinter *pp = NULL;
+	LLambda *ans;
+
+	if (pp == NULL) {
+		pp = l_pretty_printer_new (ctx);
+		l_pretty_printer_set_debug_output (pp, 1);
+	}
+	printf ("Function : ");
+	l_pretty_print_lambda (pp, lambda);
+	printf ("\nFunctor : ");
+	l_pretty_print_tree (pp, arg);
+	printf ("\n");
+	ans = apply_nodebug (lambda, arg, ctx);
+	printf ("Answer: ");
+	l_pretty_print_lambda (pp, ans);
+	printf ("\n");
+	return ans;
+}
+
+#else
+#define apply apply_nodebug
+#endif
+
+static LLambda *
+apply_nodebug (LLambda *lambda, LTreeNode *arg, LContext *ctx)
 {
 	ReplaceByParamArgs rbpa;
 	assert (lambda->args);
-	rbpa.param_idx = lambda->args->token->non_free_idx;
+	rbpa.param_idx = lambda->args->token->idx;
 	rbpa.parent = lambda;
 	lambda->body = substitute (lambda->body, arg, replace_by_param_id_predicate,
-	                           &rbpa, pool);
+	                           &rbpa, ctx->mempool);
 	lambda->args = lambda->args->next;
 	return lambda;
 }
@@ -195,35 +224,101 @@ remove_empty_lambdas (LTreeNode *node)
 	return node;
 }
 
+#ifdef __LABMDA__LOG
+
+static LTreeNode *normal_order_reduction_inner_nodebug (LContext *, LTreeNode *);
+
+static LTreeNode *
+normal_order_reduction_inner (LContext *ctx, LTreeNode *node)
+{
+	static LPrettyPrinter *pp = NULL;
+	static int k = 0;
+	LTreeNode *ans;
+
+	if (pp == NULL) {
+		pp = l_pretty_printer_new (ctx);
+		l_pretty_printer_set_debug_output (pp, 1);
+	}
+	
+	printf ("%d  ", k);
+	l_pretty_print_tree (pp, node);
+	printf ("\n");
+	k++;
+	ans = normal_order_reduction_inner_nodebug (ctx, node);
+	k--;
+	printf ("%d  ", k);
+	l_pretty_print_tree (pp, ans);
+ 	printf ("\n");
+	return ans;
+}
+
+#else
+#define normal_order_reduction_inner normal_order_reduction_inner_nodebug
+#endif
+
+static LTreeNode *
+normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node)
+{
+	if (node == NULL)
+		return NULL;
+	
+	/* Tokens will not be further reduced. */
+
+	if (node->token != NULL)
+		return node;
+
+	/* Lambda bodies shall be reduced. */
+
+	if (node->lambda != NULL) {
+		node->lambda->body = l_normal_order_reduction (ctx, node->lambda->body);
+		return node;
+	}
+
+	/* Neither is node a token nor a lambda, hence the following conditions
+	 * must hold. */
+
+	assert (node->left != NULL);
+	assert (node->right != NULL);
+	
+	/* First check if the current node is reducable.*/
+	#if 0
+
+	if (L_TREE_NODE_IS_APPLICATION (node)) {
+		/* If so, reduce. */
+		if (node->left->lambda != NULL) {
+			LLambda *answer = apply (node->left->lambda, node->right, ctx);
+			LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
+			l_adjust_bound_variables (answer);
+			node->lambda = answer;
+			return l_normal_order_reduction (ctx, node);
+		}
+	}
+	#endif
+
+	/* Then reduce the node's left child & right child */
+
+	node->left = l_normal_order_reduction (ctx, node->left);
+	node->right = l_normal_order_reduction (ctx, node->right);
+	
+	/* Check for reduction again. */
+
+	if (L_TREE_NODE_IS_APPLICATION (node)) {
+		if (node->left->lambda != NULL) {
+			LLambda *answer = apply (node->left->lambda, node->right, ctx);
+			LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
+			l_adjust_bound_variables (answer);
+			node->lambda = answer;
+			return l_normal_order_reduction (ctx, node);
+		}
+	}
+
+	return node;
+}
+
 LTreeNode *
 l_normal_order_reduction (LContext *ctx, LTreeNode *node)
 {
-	if (node == NULL)
-		return node;
 	node = remove_empty_lambdas (node);
-	
-	node->left = l_normal_order_reduction (ctx, node->left);
-	node->right = l_normal_order_reduction (ctx, node->right);
-
-	if (L_TREE_NODE_IS_APPLICATION (node)) {
-		assert (node->left != NULL);
-		if (node->left->lambda != NULL) {
-			LLambda *ans = apply (node->left->lambda, node->right, ctx->mempool);
-			ans->body->left = l_normal_order_reduction (ctx, ans->body->left);
-			ans->body->right = l_normal_order_reduction (ctx, ans->body->right);
-			if (ans->args == NULL) {
-				return ans->body;
-			} else {
-				LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
-				node->lambda = ans;
-				return node;
-			}
-		} else {
-			return node;
-		}
-	} else if (node->token != NULL) {
-		return node;
-	} else {
-		return node;
-	}
+	node = normal_order_reduction_inner (ctx, node);
+	return remove_empty_lambdas (node);
 }

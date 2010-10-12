@@ -88,6 +88,8 @@ l_lambda_new (void *context, LListNode *args, LTreeNode *body)
 
 	new->args = args;
 	new->body = body;
+	
+	l_adjust_bound_variables (new);
 
 	return new;
 }
@@ -109,7 +111,6 @@ l_assignment_new_lambda (void *context, LToken *lhs, LLambda *rhs)
 	LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
 
 	rhs->body = l_substitute_assignments (ctx, rhs->body);
-	l_adjust_bound_variables (rhs);
 	node->lambda = rhs;
 
 	return l_assignment_new_tree (context, lhs, node);

@@ -30,7 +30,7 @@ void
 l_pretty_print_token (LPrettyPrinter *pprinter, LToken *token)
 {
 	if (pprinter->debug)
-		fprintf (pprinter->out, "%s [%d %d] {%p}", token->name, token->idx, token->non_free_idx, token->parent);
+		fprintf (pprinter->out, "%s [%d] {%p}", token->name, token->idx, token->parent);
 	else
 		fprintf (pprinter->out, "%s", token->name);
 }
