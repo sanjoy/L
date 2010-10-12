@@ -67,6 +67,10 @@ print_tree_full (LPrettyPrinter *pprinter, LTreeNode *node)
 		fprintf (pprinter->out, "(");
 		l_pretty_print_lambda (pprinter, node->lambda);
 		fprintf (pprinter->out, ")");
+	} else if (node->lazy != NULL) {
+		fprintf (pprinter->out, "[");
+		print_tree_full (pprinter, node->lazy);
+		fprintf (pprinter->out, "]");
 	}
 	
 	print_paren = (node->right != NULL && L_TREE_NODE_IS_APPLICATION (node->right));

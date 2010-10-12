@@ -18,7 +18,7 @@ typedef struct _LTokenHashtable LTokenHashtable;
 struct _LTreeNode {
 	LToken *token;
 	LLambda *lambda;
-	struct _LTreeNode *left, *right;
+	struct _LTreeNode *left, *right, *lazy;
 };
 
 #define L_TREE_NODE_IS_APPLICATION(node) ((node)->token == NULL && (node)->lambda == NULL)
