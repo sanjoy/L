@@ -27,7 +27,7 @@ essentially a pair of square braces. You can
 
   i. Display the computed value, by entering:
              [:One];
- ii. Updated the value stored in the identifier:
+ ii. Update the value stored in the identifier:
              :One = [:One];
 iii. Store the computed value elsewhere:
              :AnotherOne = [:One];
