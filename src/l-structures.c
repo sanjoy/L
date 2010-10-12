@@ -123,7 +123,8 @@ l_global_node_new (void *context, LGlobalNodeType type, void *data)
 {
 	LContext *ctx = context;
 
-	assert (type == NODE_LAMBDA || type == NODE_ASSIGNMENT || type == NODE_EXPRESSION);
+	assert (type == NODE_LAMBDA || type == NODE_ASSIGNMENT ||
+	        type == NODE_EXPRESSION || type == NODE_IDENTIFIER);
 
 	ctx->newlines_count = 0;
 
@@ -152,5 +153,7 @@ l_global_node_new (void *context, LGlobalNodeType type, void *data)
 		else
 			ctx->last_expression = l_substitute_and_reduce (ctx, data);
 		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_EXPRESSION, ctx->last_expression);
+	} else if (type == NODE_IDENTIFIER) {
+		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_IDENTIFIER, data);
 	}
 }

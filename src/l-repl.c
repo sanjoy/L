@@ -8,6 +8,7 @@
 
 typedef struct {
 	int currently_reading_file;
+	LContext *ctx;
 	LPrettyPrinter *pprinter;
 } ReplInfo;
 
@@ -33,6 +34,17 @@ print_function (void *user_data, LGlobalNodeType node_type, void *data)
 		l_pretty_print_lambda (info->pprinter, data);
 	} else if (node_type == NODE_EXPRESSION) {
 		l_pretty_print_tree (info->pprinter, data);
+	} else if (node_type == NODE_IDENTIFIER) {
+		LToken *ident = data;
+		LAssignment *iter;
+		for (iter = info->ctx->global_assignments; iter; iter = iter->next) {
+			if (iter->lhs->idx == ident->idx) {
+				l_pretty_print_tree (info->pprinter, iter->rhs);
+				break;
+			}
+		}
+		if (iter == NULL)
+			printf ("Could not find identifier %s.", ident->name);
 	}
 	printf ("\n\n");
 }
@@ -90,6 +102,7 @@ void l_start_repl (char *file_name)
 	ctx->switch_file_callback = switch_file_callback;
 	ctx->switch_file_callback_data = ctx;
 	info = l_mempool_alloc (ctx->mempool, sizeof (ReplInfo));
+	info->ctx = ctx;
 	ctx->repl_data = info;
 
 	if (fil)

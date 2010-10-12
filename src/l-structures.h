@@ -49,7 +49,8 @@ typedef struct _LAssignment LAssignment;
 typedef enum {
 	NODE_ASSIGNMENT,
 	NODE_LAMBDA,
-	NODE_EXPRESSION
+	NODE_EXPRESSION,
+	NODE_IDENTIFIER
 } LGlobalNodeType;
 
 /*

@@ -46,6 +46,7 @@ program:
 	    program lambda ';'            { l_global_node_new (context, NODE_LAMBDA, $2); }
       | program '[' tree ']' ';'      { l_global_node_new (context, NODE_EXPRESSION, $3); }
       | program assignment ';'        { l_global_node_new (context, NODE_ASSIGNMENT, $2); }
+      | program IDENTIFIER ';'        { l_global_node_new (context, NODE_IDENTIFIER, $2); }
       |
       ;
 
