@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 static void
 replace_nonfree (LTreeNode *node, LLambda *parent, int token_idx)
@@ -380,11 +381,62 @@ merge_lambdas (LContext *ctx, LTreeNode *node)
 	return node;
 }
 
+struct _StringList {
+	char *str;
+	struct _StringList *next;
+};
+
+typedef struct _StringList StringList;
+
+static StringList *
+get_unresolved_variables (LTreeNode *node, StringList *prev, LMempool *pool)
+{
+	if (node == NULL)
+		return prev;
+
+	if (node->token != NULL) {
+		if (node->token->name [0] == ':') {
+			StringList *n = l_mempool_alloc (pool, sizeof (StringList));
+			n->str = node->token->name;
+			n->next = prev;
+			prev = n;
+		}
+	}
+	if (node->lambda != NULL)
+		return get_unresolved_variables (node->lambda->body, prev, pool);
+	prev = get_unresolved_variables (node->left, prev, pool);
+	prev = get_unresolved_variables (node->right, prev, pool);
+	return prev;
+}
+
 LTreeNode *
 l_normal_order_reduction (LContext *ctx, LTreeNode *node)
 {
+	StringList *unresolved_symbols = NULL;
+	LMempool *err = l_mempool_new ();
+	
 	node = remove_empty_lambdas (node);
+
 	node = l_substitute_assignments (ctx, node);
+
+	unresolved_symbols = get_unresolved_variables (node, NULL, err);
+
+	if (unresolved_symbols != NULL) {
+		int total_len = 0;
+		StringList *iter;
+		char *err, *err_i;
+		for (iter = unresolved_symbols; iter; iter = iter->next)
+			total_len += strlen (iter->str) + 2;
+		err = malloc (total_len + 100);
+		err_i = err + sprintf (err, "The following symbols could not be resolved: { ");
+		for (iter = unresolved_symbols; iter; iter = iter->next)
+			err_i += sprintf (err_i, "%s ", iter->str);
+		sprintf (err_i, "}");
+		L_CALL_ERROR_HANDLER (ctx, err);
+		free (err);
+	}
+
+	l_mempool_destroy (err);
 
 	/* First evaluate lazily. */
 	node = normal_order_reduction_inner (ctx, node, 1);
