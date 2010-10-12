@@ -72,5 +72,5 @@ Then the solution:
 
 to give the final solution.
 
-L still has a lot of issues, specifically things like the lack of
-proper error handling and poor file handling are being worked on.
+L still has a lot of issues; specifically, things like the lack of
+proper error handling and poor file management are being worked on.
