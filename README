@@ -1,23 +1,76 @@
-L: A Small Lambda Calculus
+L: A Small Untyped Lambda Calculus Reduction Machine
 
-The overall objective is to build a small system which can interpret
-and simplify untyped lambda calculus. Eventually support for modules
-may be added, possibly by using Screech.
+L is a simple untyped lambda calculus reduction machine. It reads
+expressions and then reduces them.
 
-I plan to keep the core relatively simple: it shall simply read and
-simplify expressions like the following:
+The current implementation is essentially driven by a primitive
+REPL. While I'll write more detailed documentation as I get more time,
+a quick sample of how to interact with the machine follows:
 
-IfThenElse <- (L (a b c) (a b c))
-True <- (L (a b) (a))
-False <- (L (a b) (b))
+First let us enter some definitions into the REPL:
 
-One <- (L (f x) (f x))
-ZeroP <- (L (n) (n (L (x) (False)) True))
-Query <- (L () ZeroP One)
+:Zero = L a b . b;
+:Succ = L n f x. f (n f x);
 
-EVAL (Query)
+Now that the machine knows what these elements are, we can start
+combining them:
 
- >> (L (p q) (q))
+:One = :Succ :Zero;
 
-I chose the LISPish syntax for simplicity. Note that, for the same
-reason, I choose to write an application MN as (L () (M N)).
+Note that the REPL will respond with `:One = :Succ :Zero'. This is
+because the actual evaluation has not occurred yet. You can view the
+raw un-computed value stored in `:One' by simply typing `:One' in the
+REPL.
+
+To actually reduce `:One' you have to use the EVAL operator, which is
+essentially a pair of square braces. You can 
+
+  i. Display the computed value, by entering:
+             [:One];
+ ii. Updated the value stored in the identifier:
+             :One = [:One];
+iii. Store the computed value elsewhere:
+             :AnotherOne = [:One];
+
+Please note that you could have simply done a `:One = [:Succ :Zero]'
+in the first place.
+
+As another example, let us calculate 3!.
+
+First, the foundations:
+
+ L > :Zero = L a b . b;
+ L > :Succ = L n f x. f (n f x);
+ L > :Pred = L n f x . n (L g h . h (g f)) (L u . x) (L u . u);
+ L > :One = :Succ :Zero;
+ L > :Three = :Succ (:Succ (:Succ :Zero));
+ L > :Mult = L m n f. n (m f);
+
+Then the conditionals:
+
+ L > :IfThenElse = L a b c . a b c;
+ L > :True = L a b . a;
+ L > :False = L a b . b;
+ L > :IsZero = L a . a (L t . :False) :True;
+
+The factorial function is the fixed-point solution of this equations:
+
+ L > :FactorialEqn = L f n . :IfThenElse (:IsZero n) :One (:Mult n (f
+ ... (:Pred n)));
+
+The combinator to solve the above fixed-point equation.
+
+ L > :YCombinator = L f.(L x.f (x x)) (L x.f (x x));
+
+The factorial function:
+
+ L > :ActualFactorial = :YCombinator :FactorialEqn;
+
+Then the solution:
+
+ L > [:ActualFactorial :Three]
+
+to give the final solution.
+
+L still has a lot of issues, specifically things like the lack of
+proper error handling and poor file handling are being worked on.
