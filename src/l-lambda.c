@@ -338,6 +338,48 @@ normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node, int lazy)
 	return node;
 }
 
+static LTreeNode *
+replace_parents_in_tokens (LLambda *old_lambda, LLambda *new_lambda, LTreeNode *body)
+{
+	if (body == NULL)
+		return NULL;
+	if (body->token != NULL) {
+		if (body->token->parent == old_lambda)
+			body->token->parent = new_lambda;
+		return body;
+	} else if (body->lambda != NULL) {
+		body->lambda->body = replace_parents_in_tokens (old_lambda,
+		                                                new_lambda, body->lambda->body);
+		return body;
+	}
+	body->left = replace_parents_in_tokens (old_lambda, new_lambda, body->left);
+	body->right = replace_parents_in_tokens (old_lambda, new_lambda, body->right);
+	return body;
+}
+
+static LTreeNode *
+merge_lambdas (LContext *ctx, LTreeNode *node)
+{
+	if (node == NULL || node->token != NULL)
+		return node;
+	if (node->lambda != NULL) {
+		if (node->lambda->body->lambda != NULL) {
+			LListNode *iter;
+			for (iter = node->lambda->args; iter->next; iter = iter->next);
+			iter->next = node->lambda->body->lambda->args;
+			
+			node->lambda->body = replace_parents_in_tokens (node->lambda,
+			                                                node->lambda->body->lambda,
+			                                                node->lambda->body->lambda->body);
+			node->lambda->body->lambda = NULL;
+		}
+		return node;
+	}
+	node->left = merge_lambdas (ctx, node->left);
+	node->right = merge_lambdas (ctx, node->right);
+	return node;
+}
+
 LTreeNode *
 l_normal_order_reduction (LContext *ctx, LTreeNode *node)
 {
@@ -348,6 +390,9 @@ l_normal_order_reduction (LContext *ctx, LTreeNode *node)
 
 	/* Now hard-evaluate everything. */
 	node = normal_order_reduction_inner (ctx, node, 0);
+
+	/* Change L f . L x . f x to L f x . f x */
+	node = merge_lambdas (ctx, node);
 
 	return node;
 }
