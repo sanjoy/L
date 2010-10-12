@@ -95,25 +95,27 @@ l_lambda_new (void *context, LListNode *args, LTreeNode *body)
 }
 
 LAssignment *
-l_assignment_new_tree (void *context, LToken *lhs, LTreeNode *rhs)
+l_assignment_new_tree (void *context, LToken *lhs, LTreeNode *rhs, int simplify)
 {
 	LContext *ctx = context;
 	LAssignment *new = l_mempool_alloc (ctx->mempool, sizeof (LAssignment));
 	new->lhs = lhs;
-	new->rhs = l_substitute_and_reduce (ctx, rhs);
+	if (simplify)
+		new->rhs = l_substitute_and_reduce (ctx, rhs);
+	else
+		new->rhs = l_substitute_assignments (ctx, rhs);
 	return new;
 }
 
 LAssignment *
-l_assignment_new_lambda (void *context, LToken *lhs, LLambda *rhs)
+l_assignment_new_lambda (void *context, LToken *lhs, LLambda *rhs, int simplify)
 {
 	LContext *ctx = context;
 	LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
 
-	rhs->body = l_substitute_assignments (ctx, rhs->body);
 	node->lambda = rhs;
 
-	return l_assignment_new_tree (context, lhs, node);
+	return l_assignment_new_tree (context, lhs, node, simplify);
 }
 
 void

@@ -65,8 +65,8 @@ LTreeNode *l_tree_cons_tree_lambda (LMempool *, LTreeNode *, LLambda *);
 LListNode *l_list_cons (LMempool *, LToken *, LListNode *, void *);
 
 LLambda *l_lambda_new (void *, LListNode *, LTreeNode *);
-LAssignment *l_assignment_new_tree (void *, LToken *, LTreeNode *);
-LAssignment *l_assignment_new_lambda (void *, LToken *, LLambda *);
+LAssignment *l_assignment_new_tree (void *, LToken *, LTreeNode *, int);
+LAssignment *l_assignment_new_lambda (void *, LToken *, LLambda *, int);
 
 void l_global_node_new (void *, LGlobalNodeType, void *);
 

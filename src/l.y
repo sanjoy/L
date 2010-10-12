@@ -68,8 +68,10 @@ lambda:
      ;
 
 assignment:
-           IDENTIFIER '=' tree   { $$ = l_assignment_new_tree (context, $1, $3); }
-         | IDENTIFIER '=' lambda { $$ = l_assignment_new_lambda (context, $1, $3); }
+           IDENTIFIER '=' tree       { $$ = l_assignment_new_tree (context, $1, $3, 1); }
+         | IDENTIFIER '=' lambda     { $$ = l_assignment_new_lambda (context, $1, $3, 1); }
+         | IDENTIFIER '<' '-' tree   { $$ = l_assignment_new_tree (context, $1, $4, 0); }
+         | IDENTIFIER '<' '-' lambda { $$ = l_assignment_new_lambda (context, $1, $4, 0); }
          ;
 
 %%
