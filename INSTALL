@@ -1,0 +1,14 @@
+To compile L, just type `make' in the root directory. This should
+build the executable and place it in the (newly created) `build/'
+directory. You can then either run L directly by executing `build/l'
+or copy l over to your favourite folder and run it from there.
+
+L should compile on any decent GNU / Linux system, since it uses
+nothing more than the standard C library, flex and bison. It may not
+compile on a strict POSIX system, since it uses non-POSIX extensions
+to flex and bison.
+
+I did not use autofoo mainly because I found the additional bloat
+unneeded; L does not have any hard-to-find dependencies. This may
+change in the future; especially if I see the need to use additional
+libraries.
