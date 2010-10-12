@@ -46,7 +46,7 @@
 
 [ \t\n]+                        ;
 
-[()=.L;<-]                      return *yytext;
+[()=.L;<-\[\]]                  return *yytext;
 
 "EVAL"                          return EVAL;
 

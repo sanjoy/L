@@ -45,7 +45,7 @@ void l_error (YYLTYPE *, LContext *, const char *);
 
 program:
 	    program lambda ';'            { l_global_node_new (context, NODE_LAMBDA, $2); }
-      | program EVAL '(' tree ')' ';' { l_global_node_new (context, NODE_EXPRESSION, $4); }
+      | program '[' tree ']' ';'      { l_global_node_new (context, NODE_EXPRESSION, $3); }
       | program assignment ';'        { l_global_node_new (context, NODE_ASSIGNMENT, $2); }
       |
       ;
@@ -68,10 +68,10 @@ lambda:
      ;
 
 assignment:
-           IDENTIFIER '=' tree       { $$ = l_assignment_new_tree (context, $1, $3, 1); }
-         | IDENTIFIER '=' lambda     { $$ = l_assignment_new_lambda (context, $1, $3, 1); }
-         | IDENTIFIER '<' '-' tree   { $$ = l_assignment_new_tree (context, $1, $4, 0); }
-         | IDENTIFIER '<' '-' lambda { $$ = l_assignment_new_lambda (context, $1, $4, 0); }
+           IDENTIFIER '=' tree           { $$ = l_assignment_new_tree (context, $1, $3, 0); }
+         | IDENTIFIER '=' lambda         { $$ = l_assignment_new_lambda (context, $1, $3, 0); }
+         | IDENTIFIER '=' '[' tree ']'   { $$ = l_assignment_new_tree (context, $1, $4, 1); }
+         | IDENTIFIER '=' '[' lambda ']' { $$ = l_assignment_new_lambda (context, $1, $4, 1); }
          ;
 
 %%
