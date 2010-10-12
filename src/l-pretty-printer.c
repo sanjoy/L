@@ -35,12 +35,6 @@ l_pretty_print_token (LPrettyPrinter *pprinter, LToken *token)
 		fprintf (pprinter->out, "%s", token->name);
 }
 
-#define PRINT_N_TIMES(n,text,out) do {	  \
-		int ___i; \
-		for (___i = 0; ___i < (n); ___i++) \
-			fprintf (out, text); \
-	} while (0)
-
 static int
 print_tree_full (LPrettyPrinter *, LTreeNode *);
 
