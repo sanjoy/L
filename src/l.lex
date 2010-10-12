@@ -60,6 +60,8 @@
                                      return TOKEN;
                                 }
 
+\$[a-zA-Z0-9]+                  L_CALL_SPECIAL_COMMAND_CALLBACK (yyextra, yytext);
+                                
 <<EOF>>                         return END;
 
 %%

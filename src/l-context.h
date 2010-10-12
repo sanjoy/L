@@ -20,6 +20,11 @@ typedef void (*LGlobalNotifier) (void *, LGlobalNodeType, void *);
  */
 typedef void (*LNewlineCallback) (void *, int complete);
 
+/* This is called whenever a special command (starting with a $) is
+ * read.
+ */
+typedef void (*SpecialCommandCallback) (void *, char *);
+
 /*
  * Hosts one computation environment.
  */
@@ -55,6 +60,9 @@ typedef struct {
 	LNewlineCallback newline_callback;
 	int complete_flag;
 
+	SpecialCommandCallback special_command_callback;
+	void *special_command_callback_data;
+
 } LContext;
 
 /*
@@ -79,6 +87,12 @@ typedef struct {
 			                         (ctx)->complete_flag); \
 		if ((ctx)->complete_flag) \
 			(ctx)->complete_flag = 0; \
+	} while (0)
+
+#define L_CALL_SPECIAL_COMMAND_CALLBACK(ctx, __txt) do {	  \
+		if ((ctx)->special_command_callback) \
+			(ctx)->special_command_callback ((ctx)->special_command_callback_data, \
+			                                 __txt); \
 	} while (0)
 
 /*
