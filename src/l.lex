@@ -65,12 +65,12 @@
 [()=.L;<-\[\]]                  return *yytext;
 
 :[A-Z][a-zA-Z0-9]*              {
-                                     yylval->identifier = l_token_new (yyextra->hash_table, yyextra->mempool, yytext);
+                                     yylval->identifier = l_token_new (yyextra->hash_table, yyextra->gc_mempool, yytext);
                                      return IDENTIFIER;
                                 }
 
 [a-zA-Z0-9*+]+                  {
-                                     yylval->token = l_token_new (yyextra->hash_table, yyextra->mempool, yytext);
+                                     yylval->token = l_token_new (yyextra->hash_table, yyextra->gc_mempool, yytext);
                                      return TOKEN;
                                 }
 
@@ -104,6 +104,7 @@ void
 l_destroy_context (LContext *context)
 {
 	l_lex_destroy (context->scanner_data);
-	l_mempool_destroy (context->mempool);
+	l_mempool_destroy (context->gc_mempool);
+	l_mempool_destroy (context->nogc_mempool);
 	free (context);
 }

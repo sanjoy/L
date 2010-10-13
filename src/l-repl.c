@@ -101,7 +101,7 @@ void l_start_repl (char *file_name)
 	ctx->newline_callback = newline_callback;
 	ctx->switch_file_callback = switch_file_callback;
 	ctx->switch_file_callback_data = ctx;
-	info = l_mempool_alloc (ctx->mempool, sizeof (ReplInfo));
+	info = l_mempool_alloc (ctx->nogc_mempool, sizeof (ReplInfo));
 	info->ctx = ctx;
 	ctx->repl_data = info;
 

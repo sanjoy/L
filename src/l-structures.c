@@ -80,7 +80,7 @@ LLambda *
 l_lambda_new (void *context, LListNode *args, LTreeNode *body)
 {
 	LContext *ctx = context;
-	LLambda *new = l_mempool_alloc (ctx->mempool, sizeof (LLambda));
+	LLambda *new = l_mempool_alloc (ctx->gc_mempool, sizeof (LLambda));
 	
 	if (body == NULL) {
 		L_CALL_ERROR_HANDLER (ctx, "Lambdas with empty bodies not allowed.");
@@ -98,7 +98,7 @@ LAssignment *
 l_assignment_new_tree (void *context, LToken *lhs, LTreeNode *rhs, int simplify)
 {
 	LContext *ctx = context;
-	LAssignment *new = l_mempool_alloc (ctx->mempool, sizeof (LAssignment));
+	LAssignment *new = l_mempool_alloc (ctx->gc_mempool, sizeof (LAssignment));
 	new->lhs = lhs;
 	if (simplify)
 		new->rhs = l_substitute_and_reduce (ctx, rhs);
@@ -111,7 +111,7 @@ LAssignment *
 l_assignment_new_lambda (void *context, LToken *lhs, LLambda *rhs, int simplify)
 {
 	LContext *ctx = context;
-	LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
+	LTreeNode *node = l_mempool_alloc (ctx->gc_mempool, sizeof (LTreeNode));
 
 	node->lambda = rhs;
 

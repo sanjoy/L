@@ -51,15 +51,15 @@ program:
       ;
 
 list:
-     TOKEN list { $$ = l_list_cons (context->mempool, $1, $2, context); }
+     TOKEN list { $$ = l_list_cons (context->gc_mempool, $1, $2, context); }
    |            { $$ = NULL; }
    ;
 
 tree:
-     tree TOKEN             { $$ = l_tree_cons_tree_token  (context->mempool, $1, $2); }
-   | tree IDENTIFIER        { $$ = l_tree_cons_tree_token  (context->mempool, $1, $2); }
-   | tree '(' tree  ')'     { $$ = l_tree_cons_tree_tree   (context->mempool, $1, $3); }
-   | tree '(' lambda ')'    { $$ = l_tree_cons_tree_lambda (context->mempool, $1, $3); }
+     tree TOKEN             { $$ = l_tree_cons_tree_token  (context->gc_mempool, $1, $2); }
+   | tree IDENTIFIER        { $$ = l_tree_cons_tree_token  (context->gc_mempool, $1, $2); }
+   | tree '(' tree  ')'     { $$ = l_tree_cons_tree_tree   (context->gc_mempool, $1, $3); }
+   | tree '(' lambda ')'    { $$ = l_tree_cons_tree_lambda (context->gc_mempool, $1, $3); }
    |                        { $$ = NULL; }
    ;
 
@@ -83,9 +83,10 @@ LContext *
 l_context_new_from_file (FILE *file)
 {
 	LContext *context = calloc (sizeof (LContext), 1);
-	context->mempool = l_mempool_new ();
+	context->gc_mempool = l_mempool_new ();
+	context->nogc_mempool = l_mempool_new ();
 	context->input_file = file;
-	context->hash_table = l_token_hashtable_new (context->mempool, 97);
+	context->hash_table = l_token_hashtable_new (context->nogc_mempool, 97);
 	return context;
 }
 
@@ -95,11 +96,12 @@ l_context_new_from_string (char *str, size_t len)
 	LContext *context = calloc (sizeof (LContext), 1);
 	size_t i = 0;
 	
-	context->mempool = l_mempool_new ();
+	context->gc_mempool = l_mempool_new ();
+	context->nogc_mempool = l_mempool_new ();
 	context->input_file = NULL;
-	context->hash_table = l_token_hashtable_new (context->mempool, 97);
+	context->hash_table = l_token_hashtable_new (context->nogc_mempool, 97);
 	
-	context->input_string = l_mempool_alloc (context->mempool, len + 1);
+	context->input_string = l_mempool_alloc (context->nogc_mempool, len + 1);
 	while (i < len && *str != '\0')
 		context->input_string [i++] = *str++;
 	context->input_string [i] = '\0';

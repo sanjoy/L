@@ -150,7 +150,7 @@ l_substitute_assignments (LContext *ctx, LTreeNode *node)
 	for (assign_iter = ctx->global_assignments; assign_iter;
 	     assign_iter = assign_iter->next) {
 		node = substitute (node, assign_iter->rhs, replace_by_token_id_predicate,
-		                   &assign_iter->lhs->idx, ctx->mempool);
+		                   &assign_iter->lhs->idx, ctx->gc_mempool);
 	}
 	return node;
 }
@@ -205,7 +205,7 @@ apply_nodebug (LLambda *lambda, LTreeNode *arg, LContext *ctx)
 	rbpa.param_idx = lambda->args->token->idx;
 	rbpa.parent = lambda;
 	lambda->body = substitute (lambda->body, arg, replace_by_param_id_predicate,
-	                           &rbpa, ctx->mempool);
+	                           &rbpa, ctx->gc_mempool);
 	lambda->args = lambda->args->next;
 	return lambda;
 }
@@ -318,12 +318,12 @@ normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node, int lazy)
 	if (L_TREE_NODE_IS_APPLICATION (node)) {
 		if (node->left->lambda != NULL) {
 			if (node->right->token != NULL) {
-				LTreeNode *lz = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
+				LTreeNode *lz = l_mempool_alloc (ctx->gc_mempool, sizeof (LTreeNode));
 				lz->lazy = node->right;
 				node->right = lz;
 			}
 			LLambda *answer = apply (node->left->lambda, node->right, ctx);
-			LTreeNode *node = l_mempool_alloc (ctx->mempool, sizeof (LTreeNode));
+			LTreeNode *node = l_mempool_alloc (ctx->gc_mempool, sizeof (LTreeNode));
 			l_adjust_bound_variables (answer);
 			node->lambda = answer;
 			node->lambda->body = normal_order_reduction_inner (ctx, node->lambda->body, lazy);

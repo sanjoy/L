@@ -84,5 +84,6 @@ l_mempool_destroy (LMempool *pool)
 		munmap (i, i->real_end - i->begin);
 		i = j;
 	}
+	close (pool->dev_zero_fd);
 	free (pool);
 }

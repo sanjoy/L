@@ -9,7 +9,7 @@ struct _LPrettyPrinter {
 LPrettyPrinter *
 l_pretty_printer_new (LContext *ctx)
 {
-	LPrettyPrinter *new = l_mempool_alloc (ctx->mempool, sizeof (LPrettyPrinter));
+	LPrettyPrinter *new = l_mempool_alloc (ctx->nogc_mempool, sizeof (LPrettyPrinter));
 	new->out = stdout;
 	return new;
 }

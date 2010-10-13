@@ -31,8 +31,14 @@ typedef struct {
 
 	void *scanner_data;
 
-	/* Everything is allocated from this memory pool */
-	LMempool *mempool;
+	/* Things that are reachable (transparently) from the fields
+	 * marked as ROOT should be allocated from here. This memory
+	 * pool is garbage collected. */
+	LMempool *gc_mempool;
+
+	/* Everything else should be collected from this memory pool.
+	 */
+	LMempool *nogc_mempool;
 
 	LTokenHashtable *hash_table;
 
