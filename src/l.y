@@ -83,10 +83,10 @@ LContext *
 l_context_new_from_file (FILE *file)
 {
 	LContext *context = calloc (sizeof (LContext), 1);
-	context->gc_mempool = l_mempool_new ();
-	context->nogc_mempool = l_mempool_new ();
+	context->gc_mempool = l_mempool_new (1);
+	context->nogc_mempool = l_mempool_new (0);
 	context->input_file = file;
-	context->hash_table = l_token_hashtable_new (context->nogc_mempool, 97);
+	context->hash_table = l_token_hashtable_new (context->nogc_mempool, context->gc_mempool, 97);
 	return context;
 }
 
@@ -96,10 +96,10 @@ l_context_new_from_string (char *str, size_t len)
 	LContext *context = calloc (sizeof (LContext), 1);
 	size_t i = 0;
 	
-	context->gc_mempool = l_mempool_new ();
-	context->nogc_mempool = l_mempool_new ();
+	context->gc_mempool = l_mempool_new (1);
+	context->nogc_mempool = l_mempool_new (0);
 	context->input_file = NULL;
-	context->hash_table = l_token_hashtable_new (context->nogc_mempool, 97);
+	context->hash_table = l_token_hashtable_new (context->nogc_mempool, context->gc_mempool, 97);
 	
 	context->input_string = l_mempool_alloc (context->nogc_mempool, len + 1);
 	while (i < len && *str != '\0')

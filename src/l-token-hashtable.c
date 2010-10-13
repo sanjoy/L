@@ -12,18 +12,19 @@ typedef struct _HashElement HashElement;
 
 struct _LTokenHashtable {
 	HashElement **table;
-	LMempool *mempool;
+	LMempool *other_pool, *token_pool;
 	int hash_len;
 	int token_id_max;
 };
 
 LTokenHashtable *
-l_token_hashtable_new (LMempool *pool, int hash_len)
+l_token_hashtable_new (LMempool *other_pool, LMempool *token_pool, int hash_len)
 {
-	LTokenHashtable *table = l_mempool_alloc (pool, sizeof (LTokenHashtable));
+	LTokenHashtable *table = l_mempool_alloc (other_pool, sizeof (LTokenHashtable));
 	table->hash_len = hash_len;
-	table->table = l_mempool_alloc (pool, sizeof (HashElement *) * hash_len);
-	table->mempool = pool;
+	table->table = l_mempool_alloc (other_pool, sizeof (HashElement *) * hash_len);
+	table->other_pool = other_pool;
+	table->token_pool = token_pool;
 	return table;
 }
 
@@ -54,7 +55,7 @@ LToken *
 l_token_hashtable_hash (LTokenHashtable *table, char *text)
 {
 	HashElement *bucket = hashtable_lookup (table, text);
-	LToken *token = l_mempool_alloc (table->mempool, sizeof (LToken));
+	LToken *token = l_mempool_alloc (table->token_pool, sizeof (LToken));
 
 	if (bucket != NULL) {
 		token->name = bucket->token_name;
@@ -62,11 +63,11 @@ l_token_hashtable_hash (LTokenHashtable *table, char *text)
 		return token;
 	} else {
 		int slot = string_to_slot (table, text);
-		token->name = l_mempool_alloc (table->mempool, strlen (text) + 1);
+		token->name = l_mempool_alloc (table->other_pool, strlen (text) + 1);
 		strcpy (token->name, text);
 		token->idx = table->token_id_max++;
 		
-		bucket = l_mempool_alloc (table->mempool, sizeof (HashElement));
+		bucket = l_mempool_alloc (table->other_pool, sizeof (HashElement));
 		bucket->token_name = token->name;
 		bucket->token_id = token->idx;
 		bucket->next = table->table [slot];

@@ -156,4 +156,6 @@ l_global_node_new (void *context, LGlobalNodeType type, void *data)
 	} else if (type == NODE_IDENTIFIER) {
 		L_CALL_GLOBAL_NOTIFIER (ctx, NODE_IDENTIFIER, data);
 	}
+
+	l_mempool_gc (ctx->gc_mempool, ctx);
 }

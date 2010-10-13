@@ -8,7 +8,7 @@
  * Note that the LMempool is permamently stored in the LTokenHashtable
  * structure.
  */
-LTokenHashtable *l_token_hashtable_new (LMempool *, int);
+LTokenHashtable *l_token_hashtable_new (LMempool *, LMempool *, int);
 
 LToken *l_token_hashtable_hash (LTokenHashtable *, char *);
 

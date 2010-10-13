@@ -5,7 +5,7 @@
 
 typedef struct _LMempool LMempool;
 
-LMempool *l_mempool_new (void);
+LMempool *l_mempool_new (int);
 void *l_mempool_alloc (LMempool *, size_t);
 void l_mempool_pre_alloc (LMempool *, size_t);
 void l_mempool_destroy (LMempool *);

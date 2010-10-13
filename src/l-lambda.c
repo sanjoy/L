@@ -413,7 +413,7 @@ LTreeNode *
 l_normal_order_reduction (LContext *ctx, LTreeNode *node)
 {
 	StringList *unresolved_symbols = NULL;
-	LMempool *err = l_mempool_new ();
+	LMempool *err = l_mempool_new (0);
 	
 	node = remove_empty_lambdas (node);
 
