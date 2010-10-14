@@ -24,6 +24,13 @@
 		__tmp [n / 8] |= 1 << (n % 8); \
 	} while (0)
 
+#define UNMARK_NTH_BIT(block, __n) do { \
+		char *__tmp = (char *) ((block)->begin); \
+		int n = (__n); \
+		assert ((n / 8 + 1) <= (block)->offset); \
+		__tmp [n / 8] &= ~(1 << (n % 8)); \
+	} while (0)
+
 #define GET_NTH_BIT(bits, n) \
 	(((((char *) (bits)) [n / 8]) & (1 << (n % 8))) != 0)
 
@@ -41,6 +48,7 @@ typedef struct _MempoolNode MempoolNode;
 struct _LMempool {
 	size_t page_size;
 	int dev_zero_fd, gc;
+	size_t total_bytes;
 	MempoolNode *blocks;
 };
 
@@ -65,6 +73,7 @@ struct _LMempool {
 		new_node->offset = offset; \
 		assert (new_node->offset >= (((new_node->real_end - new_node->begin) / SIZEOF_PTR) / 8 + 1)); \
 		(pool)->blocks = new_node; \
+		(pool)->total_bytes += sz; \
 	} while (0)
 
 LMempool *
@@ -91,8 +100,11 @@ l_mempool_alloc (LMempool *pool, size_t size)
 			size = (size / SIZEOF_PTR + 1) * SIZEOF_PTR;
 	}
 
-	if ((pool->blocks->real_end - pool->blocks->end) < size)
+	if ((pool->blocks->real_end - pool->blocks->end) < size) {
+		//		printf ("Need %d bytes (from %d), allocating new block\n", size, (pool->blocks->real_end - pool->blocks->end));
 		ALLOC_NEW_NODE (pool, size);
+	}
+
 	ret = pool->blocks->end;
 	pool->blocks->end += size;
 	return ret;
@@ -137,68 +149,93 @@ find_and_mark (MempoolNode *blocks, void *to_find, int sz)
 	return 0;
 }
 
-static void recursive_mark_lambda (LMempool *, LLambda *);
+#define CONVERT_TOKEN(x) mark_ ## x
+#define SCAN_ACTION(pool, node, type) \
+	assert (find_and_mark ((pool)->blocks, (node), sizeof (type)))
 
-static void
-recursive_mark_tree (LMempool *pool, LTreeNode *node)
-{
-	if (node == NULL)
-		return;
+#include "l-mempool-scan.inc"
 
-	assert (find_and_mark (pool->blocks, node, sizeof (LTreeNode)));
+#undef CONVERT_TOKEN
+#undef SCAN_ACTION
 
-	recursive_mark_tree (pool, node->left);
-	recursive_mark_tree (pool, node->right);
-	recursive_mark_tree (pool, node->lazy);
-	recursive_mark_lambda (pool, node->lambda);
+#if 0
 
-	if (node->token != NULL)
-		assert (find_and_mark (pool->blocks, node->token, sizeof (LToken)));
-}
+/* Maybe for a moving GC later. */
 
-static void
-recursive_mark_assignment (LMempool *pool, LAssignment *assignment)
-{
-	assert (find_and_mark (pool->blocks, assignment, sizeof (LAssignment)));
-	assert (find_and_mark (pool->blocks, assignment->lhs, sizeof (LToken)));
-	recursive_mark_tree (pool, assignment->rhs);
-}
-
-static void
-mark_list (LMempool *pool, LListNode *iter)
-{
-	for (; iter; iter = iter->next) {
-		assert (find_and_mark (pool->blocks, iter, sizeof (LListNode)));
-		assert (find_and_mark (pool->blocks, iter->token, sizeof (LToken)));
-	}
-}
-
-static void
-recursive_mark_lambda (LMempool *pool, LLambda *lambda)
-{
-	if (lambda == NULL)
-		return;
-	assert (find_and_mark (pool->blocks, lambda, sizeof (LLambda)));
-	mark_list (pool, lambda->args);
-	recursive_mark_tree (pool, lambda->body);
-}
-
-static void
-calculate_stats (LMempool *pool, int *used, int *total)
+static void *
+find_space (LMempool *pool, size_t sz)
 {
 	MempoolNode *iter;
-	int used_count = 0, total_count = 0;
+	int words = sz / SIZEOF_PTR, i, j;
 	for (iter = pool->blocks; iter; iter = iter->next) {
-		int i;
-		total_count += GET_MPOOL_NODE_SIZE (iter) / SIZEOF_PTR;
-		for (i = 0; i < GET_MPOOL_NODE_SIZE (iter) / SIZEOF_PTR; i++) {
-			if (GET_NTH_BIT (iter->begin, i))
-				used_count++;
+		for (i = 0; i < GET_MPOOL_NODE_SIZE (iter) / SIZEOF_PTR - words; i++) {
+			for (j = 0; j < words; j++)
+				if (GET_NTH_BIT (iter->begin, i + j))
+					break;
+			if (j == words)
+				return ((char *) iter) + SIZEOF_PTR * i;
 		}
 	}
+	return NULL;
+}
 
-	*used = used_count;
-	*total = total_count;
+static void
+erase_bits (LMempool *pool, void *ptr, size_t sz)
+{
+	MempoolNode *iter;
+	int i;
+	for (iter = pool->blocks; iter; iter = iter->next) {
+		if (ptr >= iter->begin && ptr < iter->end) {
+			assert ((((size_t) (ptr - iter->begin)) % SIZEOF_PTR) == 0);
+			for (i = 0; i < sz / SIZEOF_PTR; i++)
+				UNMARK_NTH_BIT (iter, ((size_t) (ptr - iter->begin)) / SIZEOF_PTR + i);
+			return;
+		}
+	}
+	assert (0);
+}
+
+#endif
+
+//#define STATS 1
+
+static void
+delete_empty_blocks (LMempool *pool)
+{
+	MempoolNode *iter, *parent, *iter_next;
+#ifdef STATS
+	size_t prev_total = pool->total_bytes;
+	size_t freed = 0;
+#endif
+
+	parent = NULL;
+	for (iter = pool->blocks; iter; iter = iter_next) {
+		int i, used = 0;
+		for (i = 0; i < GET_MPOOL_NODE_SIZE (iter) / SIZEOF_PTR; i++) {
+			if (GET_NTH_BIT (iter->begin, i)) {
+				used = 1;
+				break;
+			}
+		}
+		iter_next = iter->next;
+		if (!used) {
+			if (parent == NULL)
+				pool->blocks = iter->next;
+			else
+				parent->next = iter->next;
+			pool->total_bytes -= (size_t) ((char *) (iter->real_end) - (char *) iter);
+#ifdef STATS
+			freed += (size_t) ((char *)iter->real_end - (char *) iter);
+#endif
+			munmap ((void *) iter, (char *) (iter->real_end) - (char *) iter);
+		} else 
+			parent = iter;
+	}
+
+#ifdef STATS
+	printf ("Freed %d bytes. Previous total %d bytes. Current total %d bytes.\n",
+	        (int) freed, (int) prev_total, (int) pool->total_bytes);
+#endif
 }
 
 void
@@ -209,8 +246,6 @@ l_mempool_gc (LMempool *pool, void *context)
 	LAssignment *a_root_iter;
 	LLambda *l_root_iter;
 
-	int total, used;
-
 	assert (pool->gc);
 
 	/* First clear the tag blocks. */
@@ -218,12 +253,10 @@ l_mempool_gc (LMempool *pool, void *context)
 		memset (iter->begin, 0, ((size_t) (iter->real_end - iter->begin)) >> SIZEOF_PTR);
 
 	for (a_root_iter = ctx->global_assignments; a_root_iter; a_root_iter = a_root_iter->next)
-		recursive_mark_assignment (pool, a_root_iter);
+		mark_recursive_assignment (pool, a_root_iter);
 	
 	for (l_root_iter = ctx->global_lambdas; l_root_iter; l_root_iter = l_root_iter->next)
-		recursive_mark_lambda (pool, l_root_iter);
+		mark_recursive_lambda (pool, l_root_iter);
 
-	calculate_stats (pool, &used, &total);
-
-	printf ("%d / %d\n", used, total);
+	delete_empty_blocks (pool);
 }
