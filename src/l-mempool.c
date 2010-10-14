@@ -158,6 +158,23 @@ find_and_mark (MempoolNode *blocks, void *to_find, int sz)
 #undef CONVERT_TOKEN
 #undef SCAN_ACTION
 
+static int
+is_memblock_free (MempoolNode *block)
+{
+	/* TODO: Maybe have a free flag. */
+	int i;
+	size_t sz = GET_MPOOL_NODE_SIZE (block) / SIZEOF_PTR;
+	if (sz % 8 != 0)
+		sz = (sz / 8 + 1) * 8; /* No need to show off with clever
+		                        * bit shifting; GCC shall take care.
+		                        */
+	for (i = 0; i < sz; i++) {
+		if (((char *) block->begin) [i] != 0)
+			return 0;
+	}
+	return 0;
+}
+
 #if 0
 
 /* Maybe for a moving GC later. */
@@ -210,15 +227,8 @@ delete_empty_blocks (LMempool *pool)
 
 	parent = NULL;
 	for (iter = pool->blocks; iter; iter = iter_next) {
-		int i, used = 0;
-		for (i = 0; i < GET_MPOOL_NODE_SIZE (iter) / SIZEOF_PTR; i++) {
-			if (GET_NTH_BIT (iter->begin, i)) {
-				used = 1;
-				break;
-			}
-		}
 		iter_next = iter->next;
-		if (!used) {
+		if (is_memblock_free (iter)) {
 			if (parent == NULL)
 				pool->blocks = iter->next;
 			else
