@@ -3,20 +3,30 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <setjmp.h>
 
-#define WELCOME_MSG "Welcome to L.\nPress Ctrl + D to exit.\n"
+#define WELCOME_MSG "Welcome to L.\nPress Ctrl + C (or Ctrl + D) to exit.\n"
+
+#define SETJMP_HAD_ERR 42
 
 typedef struct {
 	int currently_reading_file;
 	LContext *ctx;
 	LPrettyPrinter *pprinter;
+	jmp_buf error_jump;
 } ReplInfo;
 
 static void
 error_handler (void *user_data, const char *err)
 {
-	fprintf (stderr, "ERROR: %s\n", err);
-	exit (-1);
+	ReplInfo *info = user_data;
+	if (info->ctx->input_file != stdin)
+		fprintf (stderr, "Error in startup file: %s\n", err);
+	else {
+		fprintf (stderr, "Error: %s\n", err);
+		info->ctx->chars_since_last_global = 0;
+		longjmp (info->error_jump, SETJMP_HAD_ERR);
+	}
 }
 
 static void
@@ -96,14 +106,16 @@ void l_start_repl (char *file_name)
 
 	printf (WELCOME_MSG);
 
+	info = l_mempool_alloc (ctx->nogc_mempool, sizeof (ReplInfo));
+	info->ctx = ctx;
+	ctx->repl_data = info;
+	ctx->error_handler_data = info;
+
 	ctx->error_handler = error_handler;
 	ctx->global_notifier = print_function;
 	ctx->newline_callback = newline_callback;
 	ctx->switch_file_callback = switch_file_callback;
 	ctx->switch_file_callback_data = ctx;
-	info = l_mempool_alloc (ctx->nogc_mempool, sizeof (ReplInfo));
-	info->ctx = ctx;
-	ctx->repl_data = info;
 
 	if (fil)
 		info->currently_reading_file = 1;
@@ -112,6 +124,9 @@ void l_start_repl (char *file_name)
 	ctx->newline_callback_data = info;
 	ctx->global_notifier_data = info;
 
+	if (setjmp (info->error_jump) != SETJMP_HAD_ERR)
+		L_CALL_NEWLINE_CALLBACK (ctx);
+	
 	l_parse_using_context (ctx);
 
 	l_destroy_context (ctx);

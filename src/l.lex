@@ -95,7 +95,6 @@ l_error (YYLTYPE *loc, LContext *context, const char* err)
 int
 l_parse_using_context (LContext *context)
 {
-	L_CALL_NEWLINE_CALLBACK (context);
 	l_lex_init_extra (context, &(context->scanner_data));
 	return l_parse (context);
 }
