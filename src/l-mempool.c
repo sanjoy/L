@@ -34,14 +34,24 @@
 #define GET_NTH_BIT(bits, n) \
 	(((((char *) (bits)) [n / 8]) & (1 << (n % 8))) != 0)
 
+#define GET_MPOOL_NODE_SIZE(node)	  \
+	((size_t) ((node)->real_end - (node)->begin))
+
+#define MARK_LSB_ADDRESS(addr) \
+	((void *) (((unsigned long) addr) | (unsigned long) 1))
+
+#define GET_LSB_FROM_ADDRESS(addr) \
+	(((unsigned long) addr) & ((unsigned long) 1))
+
+/* Will clear the last two bits. */
+#define CLEAR_LSB_FROM_ADDRESS(addr) \
+	((void *) ((unsigned long) addr & (~((unsigned long) 3))))
+
 struct _MempoolNode {
 	void *begin, *end, *real_end;
 	int offset; /* For debugging. */
 	struct _MempoolNode *next;
 };
-
-#define GET_MPOOL_NODE_SIZE(node) \
-	((size_t) ((node)->real_end - (node)->begin))
 
 typedef struct _MempoolNode MempoolNode;
 
@@ -158,21 +168,27 @@ find_and_mark (MempoolNode *blocks, void *to_find, int sz)
 #undef CONVERT_TOKEN
 #undef SCAN_ACTION
 
+#define is_memblock_free(block) \
+	(GET_LSB_FROM_ADDRESS (block->begin) ? 1 : is_memblock_free_slow (block))
+
 static int
-is_memblock_free (MempoolNode *block)
+is_memblock_free_slow (MempoolNode *block)
 {
 	/* TODO: Maybe have a free flag. */
 	int i;
 	size_t sz = GET_MPOOL_NODE_SIZE (block) / SIZEOF_PTR;
+
 	if (sz % 8 != 0)
-		sz = (sz / 8 + 1) * 8; /* No need to show off with clever
-		                        * bit shifting; GCC shall take care.
-		                        */
+		sz = sz / 8 + 1;
+	else
+		sz = sz / 8;
 	for (i = 0; i < sz; i++) {
-		if (((char *) block->begin) [i] != 0)
+		if (((char *) (block->begin)) [i]) {
 			return 0;
+		}
 	}
-	return 0;
+	block->begin = MARK_LSB_ADDRESS (block->begin);
+	return 1;
 }
 
 #if 0
@@ -214,7 +230,7 @@ erase_bits (LMempool *pool, void *ptr, size_t sz)
 
 #endif
 
-//#define STATS 1
+#define STATS 1
 
 static void
 delete_empty_blocks (LMempool *pool)
