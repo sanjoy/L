@@ -182,11 +182,9 @@ is_memblock_free_slow (MempoolNode *block)
 		sz = sz / 8 + 1;
 	else
 		sz = sz / 8;
-	for (i = 0; i < sz; i++) {
-		if (((char *) (block->begin)) [i]) {
+	for (i = 0; i < sz; i++)
+		if (((char *) (block->begin)) [i])
 			return 0;
-		}
-	}
 	block->begin = MARK_LSB_ADDRESS (block->begin);
 	return 1;
 }
@@ -230,7 +228,7 @@ erase_bits (LMempool *pool, void *ptr, size_t sz)
 
 #endif
 
-#define STATS 1
+//#define STATS 1
 
 static void
 delete_empty_blocks (LMempool *pool)
@@ -259,8 +257,9 @@ delete_empty_blocks (LMempool *pool)
 	}
 
 #ifdef STATS
-	printf ("Freed %d bytes. Previous total %d bytes. Current total %d bytes.\n",
-	        (int) freed, (int) prev_total, (int) pool->total_bytes);
+	printf ("Freed %d bytes. Previous total %d bytes. Current total %d bytes. Decrease by %.2f %%\n",
+	        (int) freed, (int) prev_total, (int) pool->total_bytes,
+	        ((float) freed) / ((float) prev_total) * 100);
 #endif
 }
 
