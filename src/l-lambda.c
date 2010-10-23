@@ -272,7 +272,7 @@ normal_order_reduction_inner (LContext *ctx, LTreeNode *node, int lazy_right)
  * possible. This is done by lazily evaluating the _right_ nodes for each
  * application node, using those lazy (and hence not-yet evaluated)
  * values to evaluate the application node, and then eagerly evaluating
- * the resultant node. This ensures we compute only those expressions as
+ * the resultant node. This ensures we compute only those expressions which
  * are required, and that the reduction machine does not hang on
  * perfectly computable expressions like
  * ((L a . b) ((L x . x x) (L x . x x))).
@@ -307,17 +307,20 @@ normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node, int lazy)
 	assert (node->left != NULL);
 	assert (node->right != NULL);
 	
-	/* Then reduce the node's left child & right child */
+	/* The left child is always reduced. */
 
 	node->left = normal_order_reduction_inner (ctx, node->left, lazy);
 
 	/* Precompute the right branch, if this is not a lazy computation. */
+
 	if (!lazy)
 		node->right = normal_order_reduction_inner (ctx, node->right, 0);
 
 	if (L_TREE_NODE_IS_APPLICATION (node)) {
 		if (node->left->lambda != NULL) {
-			if (node->right->token != NULL) {
+			/* If this is a lazy computation, mark the right node to be evaluated later.
+			 */
+			if (lazy && node->right->token != NULL) {
 				LTreeNode *lz = l_mempool_alloc (ctx->gc_mempool, sizeof (LTreeNode));
 				lz->lazy = node->right;
 				node->right = lz;
@@ -349,8 +352,8 @@ replace_parents_in_tokens (LLambda *old_lambda, LLambda *new_lambda, LTreeNode *
 			body->token->parent = new_lambda;
 		return body;
 	} else if (body->lambda != NULL) {
-		body->lambda->body = replace_parents_in_tokens (old_lambda,
-		                                                new_lambda, body->lambda->body);
+		body->lambda->body = replace_parents_in_tokens
+			(old_lambda, new_lambda, body->lambda->body);
 		return body;
 	}
 	body->left = replace_parents_in_tokens (old_lambda, new_lambda, body->left);
