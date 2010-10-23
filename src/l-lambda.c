@@ -229,10 +229,10 @@ remove_empty_lambdas (LTreeNode *node)
 
 #ifdef __LAMBDA__LOG
 
-static LTreeNode *normal_order_reduction_inner_nodebug (LContext *, LTreeNode *, int);
+static LTreeNode *normal_order_reduction_inner_nodebug (LContext *, LTreeNode *, int, int);
 
 static LTreeNode *
-normal_order_reduction_inner (LContext *ctx, LTreeNode *node, int lazy_right)
+normal_order_reduction_inner (LContext *ctx, LTreeNode *node, int lazy_right, int depth)
 {
 	static LPrettyPrinter *pp = NULL;
 	static int k = 0;
@@ -247,7 +247,7 @@ normal_order_reduction_inner (LContext *ctx, LTreeNode *node, int lazy_right)
 	l_pretty_print_tree (pp, node);
 	printf ("\n");
 	k++;
-	ans = normal_order_reduction_inner_nodebug (ctx, node, lazy_right);
+	ans = normal_order_reduction_inner_nodebug (ctx, node, lazy_right, depth);
 	k--;
 	printf ("%d OUT  ", k);
 	l_pretty_print_tree (pp, ans);
@@ -278,11 +278,13 @@ normal_order_reduction_inner (LContext *ctx, LTreeNode *node, int lazy_right)
  * ((L a . b) ((L x . x x) (L x . x x))).
  */
 
+#define RECURSION_DEPTH_MAX 128
+
 static LTreeNode *
-normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node, int lazy)
+normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node, int lazy, int depth)
 {
-	if (node == NULL)
-		return NULL;
+	if (depth > 128 || node == NULL)
+		return node;
 
 	/* Tokens will not be further reduced. */
 
@@ -292,14 +294,14 @@ normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node, int lazy)
 	/* Lambda bodies shall be reduced. */
 
 	if (node->lambda != NULL) {
-		node->lambda->body = normal_order_reduction_inner (ctx, node->lambda->body, lazy);
+		node->lambda->body = normal_order_reduction_inner (ctx, node->lambda->body, lazy, depth + 1);
 		return node;
 	}
 
 	/* This is a lazy result, which is needed now. */
 	
 	if (node->lazy != NULL)
-		return normal_order_reduction_inner (ctx, node->lazy, lazy);
+		return normal_order_reduction_inner (ctx, node->lazy, lazy, depth + 1);
 
 	/* Neither is node a token nor a lambda, hence the following conditions
 	 * must hold. */
@@ -309,12 +311,12 @@ normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node, int lazy)
 	
 	/* The left child is always reduced. */
 
-	node->left = normal_order_reduction_inner (ctx, node->left, lazy);
+	node->left = normal_order_reduction_inner (ctx, node->left, lazy, depth + 1);
 
 	/* Precompute the right branch, if this is not a lazy computation. */
 
 	if (!lazy)
-		node->right = normal_order_reduction_inner (ctx, node->right, 0);
+		node->right = normal_order_reduction_inner (ctx, node->right, 0, depth + 1);
 
 	if (L_TREE_NODE_IS_APPLICATION (node)) {
 		if (node->left->lambda != NULL) {
@@ -329,7 +331,7 @@ normal_order_reduction_inner_nodebug (LContext *ctx, LTreeNode *node, int lazy)
 			LTreeNode *node = l_mempool_alloc (ctx->gc_mempool, sizeof (LTreeNode));
 			l_adjust_bound_variables (answer);
 			node->lambda = answer;
-			node->lambda->body = normal_order_reduction_inner (ctx, node->lambda->body, lazy);
+			node->lambda->body = normal_order_reduction_inner (ctx, node->lambda->body, lazy, depth + 1);
 			if (node->lambda->args == NULL)
 				return node->lambda->body;
 			else
@@ -442,10 +444,10 @@ l_normal_order_reduction (LContext *ctx, LTreeNode *node)
 	l_mempool_destroy (err);
 
 	/* First evaluate lazily. */
-	node = normal_order_reduction_inner (ctx, node, 1);
+	node = normal_order_reduction_inner (ctx, node, 1, 0);
 
 	/* Now hard-evaluate everything. */
-	node = normal_order_reduction_inner (ctx, node, 0);
+	node = normal_order_reduction_inner (ctx, node, 0, 0);
 
 	/* Change L f . L x . f x to L f x . f x */
 	node = merge_lambdas (ctx, node);
